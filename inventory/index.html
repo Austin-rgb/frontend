@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Inventory Management System" />
+  <title>INVEX — Inventory Management</title>
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!--
+    ┌─────────────────────────────────────────────────────────────┐
+    │  API CONFIGURATION                                          │
+    │  Set your REST API base URL here before the module loads.  │
+    │  Override in any deployment environment as needed.         │
+    └─────────────────────────────────────────────────────────────┘
+  -->
+  <script>
+    window.APP_CONFIG = {
+      API_BASE_URL: 'http://localhost:8080/api',
+    };
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+
+    <!-- ─── Header ─────────────────────────────────────────────── -->
+    <header class="header" role="banner">
+      <div class="header__brand">
+        <div class="header__logo" aria-hidden="true">INV</div>
+        <div>
+          <div class="header__title">INVEX</div>
+          <div class="header__sub">Inventory Management System</div>
+        </div>
+      </div>
+      <div class="header__meta">
+        <span class="header__meta-label">API:</span>
+        <code class="header__meta-url" id="api-url-display"></code>
+        <button class="reload-btn" id="reload-btn" title="Reload inventory from API">↻ REFRESH</button>
+      </div>
+    </header>
+
+    <!-- ─── Stats bar ──────────────────────────────────────────── -->
+    <div class="stats-bar" id="stats-bar" aria-label="Inventory statistics"></div>
+
+    <!-- ─── Toolbar ────────────────────────────────────────────── -->
+    <nav class="toolbar" id="toolbar" aria-label="Inventory controls"></nav>
+
+    <!-- ─── Main content ───────────────────────────────────────── -->
+    <main class="main-content" role="main">
+      <div id="error-root"></div>
+      <div id="table-container" aria-label="Inventory items"></div>
+    </main>
+
+  </div><!-- /.app-shell -->
+
+  <!-- ─── Loading overlay ──────────────────────────────────────── -->
+  <div id="loading-root"></div>
+
+  <!-- ─── Modal root ───────────────────────────────────────────── -->
+  <div id="modal-root"></div>
+
+  <!-- ─── Toast ────────────────────────────────────────────────── -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ─── App entry point (ES module) ─────────────────────────── -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
+

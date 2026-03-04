@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Orders — My Account</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&family=DM+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;700&display=swap"
+    rel="stylesheet" />
+  <style>
+    /* ════════════════════════════════════════════
+       DESIGN TOKENS — Light mode
+    ════════════════════════════════════════════ */
+    :root {
+      /* Palette */
+      --hue-accent: 222;
+      --color-accent: hsl(var(--hue-accent), 80%, 52%);
+      --color-accent-subtle: hsl(var(--hue-accent), 80%, 52%, 0.1);
+      --color-accent-fg: #fff;
+
+      /* Surfaces */
+      --color-bg: #f4f4f0;
+      --color-card-bg: #ffffff;
+      --color-items-bg: rgba(0, 0, 0, 0.018);
+
+      /* Text */
+      --color-text-primary: #111118;
+      --color-text-secondary: #3a3a4a;
+      --color-text-muted: #888899;
+
+      /* Borders & Shadows */
+      --border-card: rgba(0, 0, 0, 0.08);
+      --border-subtle: rgba(0, 0, 0, 0.06);
+      --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.05), 0 2px 12px rgba(0, 0, 0, 0.04);
+      --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.1), 0 8px 32px rgba(0, 0, 0, 0.07);
+
+      /* Radius */
+      --radius-card: 14px;
+
+      /* Status — accessible contrast ratios verified */
+      --status-completed-bg: #d1fae5;
+      --status-completed-fg: #065f46;
+      --status-processing-bg: #fef3c7;
+      --status-processing-fg: #78350f;
+      --status-pending-bg: #dbeafe;
+      --status-pending-fg: #1e3a8a;
+      --status-cancelled-bg: #fee2e2;
+      --status-cancelled-fg: #7f1d1d;
+
+      /* Skeleton */
+      --skeleton-base: #e8e8e4;
+      --skeleton-shine: #f0f0ec;
+
+      /* Fonts */
+      --font-display: 'DM Serif Text', Georgia, serif;
+      --font-body: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'DM Mono', 'Menlo', monospace;
+    }
+
+    /* ── Dark Mode ── */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-bg: #101014;
+        --color-card-bg: #1a1a22;
+        --color-items-bg: rgba(255, 255, 255, 0.028);
+
+        --color-text-primary: #ededf2;
+        --color-text-secondary: #b0b0c0;
+        --color-text-muted: #6668;
+
+        --border-card: rgba(255, 255, 255, 0.08);
+        --border-subtle: rgba(255, 255, 255, 0.05);
+        --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.4);
+        --shadow-card-hover: 0 8px 28px rgba(0, 0, 0, 0.6);
+
+        --status-completed-bg: rgba(16, 185, 129, 0.12);
+        --status-completed-fg: #6ee7b7;
+        --status-processing-bg: rgba(245, 158, 11, 0.12);
+        --status-processing-fg: #fcd34d;
+        --status-pending-bg: rgba(59, 130, 246, 0.12);
+        --status-pending-fg: #93c5fd;
+        --status-cancelled-bg: rgba(239, 68, 68, 0.12);
+        --status-cancelled-fg: #fca5a5;
+
+        --skeleton-base: #1f1f28;
+        --skeleton-shine: #26262f;
+
+        --color-chevron-bg: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    /* ════════════════════════════════════════════
+       RESET & BASE
+    ════════════════════════════════════════════ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      min-height: 100dvh;
+      line-height: 1.5;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    /* ════════════════════════════════════════════
+       LAYOUT
+    ════════════════════════════════════════════ */
+    .app-shell {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 1rem 3rem;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      padding: 2rem 0 1.75rem;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 1.5rem;
+    }
+
+    .app-header__eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+      margin-bottom: 0.35rem;
+    }
+
+    .app-header__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 400;
+      color: var(--color-text-primary);
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+
+    .app-header__sub {
+      margin-top: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+    }
+
+    /* ── Orders list ── */
+    #orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    /* Card entrance animation */
+    .card-enter {
+      animation: cardEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ════════════════════════════════════════════
+       SKELETON LOADER
+    ════════════════════════════════════════════ */
+    #skeleton-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .skeleton-card {
+      background: var(--color-card-bg);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border-card);
+      padding: 1.1rem 1.25rem;
+    }
+
+    .skeleton-line {
+      border-radius: 6px;
+      background: linear-gradient(90deg,
+          var(--skeleton-base) 25%,
+          var(--skeleton-shine) 50%,
+          var(--skeleton-base) 75%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .skeleton-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .skeleton-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .sk-id {
+      height: 13px;
+      width: 110px;
+    }
+
+    .sk-badge {
+      height: 18px;
+      width: 76px;
+      border-radius: 999px;
+    }
+
+    .sk-date {
+      height: 11px;
+      width: 82px;
+    }
+
+    .sk-ct {
+      height: 11px;
+      width: 44px;
+    }
+
+    .sk-price {
+      height: 11px;
+      width: 56px;
+    }
+
+    /* ════════════════════════════════════════════
+       ERROR BANNER
+    ════════════════════════════════════════════ */
+    #error-banner {
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-card);
+      background: var(--status-cancelled-bg);
+      border: 1px solid var(--status-cancelled-fg);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .error-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .error-text {
+      font-size: 0.875rem;
+      color: var(--status-cancelled-fg);
+    }
+
+    /* ════════════════════════════════════════════
+       EMPTY STATE
+    ════════════════════════════════════════════ */
+    .empty-state {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* ════════════════════════════════════════════
+       RESPONSIVE ENHANCEMENTS (tablet+)
+    ════════════════════════════════════════════ */
+    @media (min-width: 540px) {
+      .app-shell {
+        padding: 0 1.5rem 4rem;
+      }
+
+      .app-header {
+        padding: 2.5rem 0 2rem;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .app-shell {
+        padding: 0 2rem 5rem;
+      }
+
+      .app-header {
+        padding: 3rem 0 2.25rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app-shell" id="main-content">
+    <header class="app-header" role="banner">
+      <p class="app-header__eyebrow">My Account</p>
+      <h1 class="app-header__title">Order History</h1>
+      <p class="app-header__sub">Recent purchases and their current status</p>
+    </header>
+
+    <!-- Loading skeleton -->
+    <div hidden id="skeleton-list" role="status" aria-label="Loading orders…" aria-live="polite">
+      <!-- 3 placeholder cards -->
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-row">
+          <div class="skeleton-line sk-id"></div>
+          <div class="skeleton-line sk-badge"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line sk-date"></div>
+          <div class="skeleton-line sk-ct"></div>
+          <div class="skeleton-line sk-price"></div>
+        </div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-row">
+          <div class="skeleton-line sk-id"></div>
+          <div class="skeleton-line sk-badge"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line sk-date"></div>
+          <div class="skeleton-line sk-ct"></div>
+          <div class="skeleton-line sk-price"></div>
+        </div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-row">
+          <div class="skeleton-line sk-id"></div>
+          <div class="skeleton-line sk-badge"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line sk-date"></div>
+          <div class="skeleton-line sk-ct"></div>
+          <div class="skeleton-line sk-price"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error banner (hidden by default) -->
+    <div id="error-banner" role="alert" hidden>
+      <span class="error-icon" aria-hidden="true">⚠</span>
+      <span class="error-text"></span>
+    </div>
+
+    <!-- Orders list (hidden until loaded) -->
+    <div id="orders-list" role="list" aria-label="Order history" aria-live="polite" hidden>
+    </div>
+  </main>
+
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>
