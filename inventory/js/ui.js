@@ -13,7 +13,6 @@ function esc(str) {
 }
 
 function fmt(val, type) {
-  if (type === "price") return `$${Number(val).toFixed(2)}`;
   if (type === "date") {
     const d = new Date(val);
     return isNaN(d) ? "—" : d.toLocaleString();
@@ -35,7 +34,7 @@ function el(tag, attrs = {}, ...children) {
   for (const child of children.flat()) {
     if (child == null) continue;
     elem.append(
-      typeof child === "string" ? document.createTextNode(child) : child
+      typeof child === "string" ? document.createTextNode(child) : child,
     );
   }
   return elem;
@@ -76,7 +75,7 @@ export function renderToolbar(container, { onSearch, onCreateClick }) {
       "aria-label": "Add new item",
     },
     el("span", { "aria-hidden": "true" }, "＋"),
-    " NEW ITEM"
+    " NEW ITEM",
   );
 
   container.append(searchInput, createBtn);
@@ -86,9 +85,7 @@ export function renderToolbar(container, { onSearch, onCreateClick }) {
 
 const COLUMNS = [
   { key: "name", label: "NAME", sortable: true },
-  { key: "description", label: "DESCRIPTION", sortable: false },
-  { key: "quantity", label: "QTY", sortable: true },
-  { key: "price", label: "PRICE", sortable: true },
+  { key: "total_quantity", label: "QTY", sortable: true },
   { key: "lastUpdated", label: "LAST UPDATED", sortable: true },
   { key: "_actions", label: "", sortable: false },
 ];
@@ -123,10 +120,10 @@ export function renderTable(container, { items, sortField, sortDir, onSort }) {
             ...(col.sortable ? { onClick: () => onSort(col.key) } : {}),
             scope: "col",
           },
-          col.label + arrow
+          col.label + arrow,
         );
-      })
-    )
+      }),
+    ),
   );
 
   const tbody = el(
@@ -137,21 +134,19 @@ export function renderTable(container, { items, sortField, sortDir, onSort }) {
         "tr",
         { className: "item-row", "data-id": item.id },
         el("td", { className: "td td--name" }, esc(item.name)),
-        el("td", { className: "td td--desc" }, esc(item.description)),
         el(
           "td",
           {
             className: `td td--qty ${
-              item.quantity <= 0
+              item.total_quantity <= 0
                 ? "td--qty-zero"
-                : item.quantity < 10
-                ? "td--qty-low"
-                : ""
+                : item.total_quantity < 10
+                  ? "td--qty-low"
+                  : ""
             }`,
           },
-          fmt(item.quantity)
+          fmt(item.total_quantity),
         ),
-        el("td", { className: "td td--price" }, fmt(item.price, "price")),
         el("td", { className: "td td--date" }, fmt(item.lastUpdated, "date")),
         el(
           "td",
@@ -164,7 +159,7 @@ export function renderTable(container, { items, sortField, sortDir, onSort }) {
               "data-id": item.id,
               title: "View details",
             },
-            "◉"
+            "◉",
           ),
           el(
             "button",
@@ -174,7 +169,7 @@ export function renderTable(container, { items, sortField, sortDir, onSort }) {
               "data-id": item.id,
               title: "Edit item",
             },
-            "✎"
+            "✎",
           ),
           el(
             "button",
@@ -184,18 +179,18 @@ export function renderTable(container, { items, sortField, sortDir, onSort }) {
               "data-id": item.id,
               title: "Delete item",
             },
-            "✕"
-          )
-        )
-      )
-    )
+            "✕",
+          ),
+        ),
+      ),
+    ),
   );
 
   const table = el(
     "table",
     { className: "data-table", role: "grid" },
     thead,
-    tbody
+    tbody,
   );
   container.append(table);
 }
@@ -214,7 +209,7 @@ export function renderLoading(container, visible) {
         "aria-live": "polite",
       },
       el("div", { className: "spinner" }),
-      el("span", {}, "LOADING…")
+      el("span", {}, "LOADING…"),
     );
     container.append(overlay);
   }
@@ -238,16 +233,16 @@ export function renderError(container, message) {
 /* ─── Item count badge ──────────────────────────────────────────── */
 export function renderStats(container, items) {
   const total = items.length;
-  const totalQty = items.reduce((s, i) => s + Number(i.quantity ?? 0), 0);
+  const totalQty = items.reduce((s, i) => s + Number(i.total_quantity ?? 0), 0);
   const totalValue = items.reduce(
-    (s, i) => s + Number(i.price ?? 0) * Number(i.quantity ?? 0),
-    0
+    (s, i) => s + Number(i.price ?? 0) * Number(i.total_quantity ?? 0),
+    0,
   );
   container.innerHTML = `
     <span class="stat"><span class="stat__label">ITEMS</span><span class="stat__value">${total}</span></span>
     <span class="stat"><span class="stat__label">TOTAL QTY</span><span class="stat__value">${totalQty}</span></span>
     <span class="stat"><span class="stat__label">TOTAL VALUE</span><span class="stat__value">$${totalValue.toFixed(
-      2
+      2,
     )}</span></span>
   `;
 }
@@ -261,15 +256,14 @@ function validateForm(data) {
   if (data.name && data.name.trim().length > 120)
     errors.name = "Name must be ≤ 120 chars.";
   if (
-    data.quantity === "" ||
-    isNaN(Number(data.quantity)) ||
-    Number(data.quantity) < 0
+    data.total_quantity === "" ||
+    isNaN(Number(data.total_quantity)) ||
+    Number(data.total_quantity) < 0
   )
-    errors.quantity = "Quantity must be a non-negative integer.";
-  if (!Number.isInteger(Number(data.quantity)))
-    errors.quantity = "Quantity must be a whole number.";
-  if (data.price === "" || isNaN(Number(data.price)) || Number(data.price) < 0)
-    errors.price = "Price must be a non-negative number.";
+    errors.total_quantity = "Quantity must be a non-negative integer.";
+  if (!Number.isInteger(Number(data.total_quantity)))
+    errors.total_quantity = "Quantity must be a whole number.";
+
   return errors;
 }
 
@@ -283,28 +277,13 @@ function buildFormFields(item) {
       value: item?.name ?? "",
     },
     {
-      key: "description",
-      label: "DESCRIPTION",
-      type: "textarea",
-      value: item?.description ?? "",
-    },
-    {
       key: "quantity",
       label: "QUANTITY",
       type: "number",
       required: true,
       min: "0",
       step: "1",
-      value: item?.quantity ?? "",
-    },
-    {
-      key: "price",
-      label: "PRICE ($)",
-      type: "number",
-      required: true,
-      min: "0",
-      step: "0.01",
-      value: item?.price ?? "",
+      value: item?.total_quantity ?? "",
     },
     {
       key: "sku",
@@ -326,7 +305,7 @@ function buildFormFields(item) {
               name: key,
               rows: "3",
             },
-            String(rest.value)
+            String(rest.value),
           )
         : el("input", {
             id: `field-${key}`,
@@ -344,14 +323,14 @@ function buildFormFields(item) {
       el(
         "label",
         { className: "form__label", for: `field-${key}` },
-        label + (required ? " *" : "")
+        label + (required ? " *" : ""),
       ),
       inputEl,
       el("span", {
         className: "form__error",
         id: `error-${key}`,
         role: "alert",
-      })
+      }),
     );
   });
 }
@@ -391,21 +370,11 @@ export function renderModal(container, { mode, item, onSave, onClose }) {
     content = el(
       "dl",
       { className: "detail-list" },
-      ...[
-        "id",
-        "name",
-        "description",
-        "quantity",
-        "price",
-        "sku",
-        "lastUpdated",
-      ].flatMap((key) => {
+      ...["id", "name", "quantity", "sku", "lastUpdated"].flatMap((key) => {
         const labels = {
           id: "ID",
           name: "NAME",
-          description: "DESCRIPTION",
           quantity: "QUANTITY",
-          price: "PRICE",
           sku: "SKU",
           lastUpdated: "LAST UPDATED",
         };
@@ -416,13 +385,13 @@ export function renderModal(container, { mode, item, onSave, onClose }) {
           el("dt", { className: "detail-list__key" }, labels[key]),
           el("dd", { className: "detail-list__val" }, esc(val)),
         ];
-      })
+      }),
     );
   } else {
     content = el(
       "form",
       { id: "item-form", className: "form", novalidate: "" },
-      ...buildFormFields(item)
+      ...buildFormFields(item),
     );
   }
 
@@ -431,14 +400,14 @@ export function renderModal(container, { mode, item, onSave, onClose }) {
         el(
           "button",
           { className: "btn btn--secondary", onClick: onClose },
-          "CLOSE"
+          "CLOSE",
         ),
       ]
     : [
         el(
           "button",
           { type: "button", className: "btn btn--secondary", onClick: onClose },
-          "CANCEL"
+          "CANCEL",
         ),
         el(
           "button",
@@ -448,7 +417,7 @@ export function renderModal(container, { mode, item, onSave, onClose }) {
             id: "modal-save-btn",
             onClick: handleSave,
           },
-          "SAVE"
+          "SAVE",
         ),
       ];
 
@@ -471,11 +440,11 @@ export function renderModal(container, { mode, item, onSave, onClose }) {
           onClick: onClose,
           "aria-label": "Close modal",
         },
-        "✕"
-      )
+        "✕",
+      ),
     ),
     el("div", { className: "modal__body" }, content),
-    el("footer", { className: "modal__footer" }, ...footerBtns)
+    el("footer", { className: "modal__footer" }, ...footerBtns),
   );
 
   const backdrop = el(
@@ -487,7 +456,7 @@ export function renderModal(container, { mode, item, onSave, onClose }) {
         if (e.target === backdrop) onClose();
       },
     },
-    modal
+    modal,
   );
   container.append(backdrop);
 
@@ -517,10 +486,8 @@ export function renderModal(container, { mode, item, onSave, onClose }) {
     const payload = {
       id: crypto.randomUUID(),
       name: data.name.trim(),
-      description: data.description?.trim() ?? "",
-      quantity: parseInt(data.quantity, 10),
+      quantity: parseInt(data.total_quantity, 10),
       sku: data.sku.trim(),
-      price: parseFloat(Number(data.price).toFixed(2)),
     };
 
     onSave(payload, () => {
