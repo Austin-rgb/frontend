@@ -1,8 +1,8 @@
 // state.js — centralised application state
 
-/** @typedef {{ id: string, name: string, description: string, quantity: number, price: number, lastUpdated: string }} Item */
+/** @typedef {{ id: string, name: string, description: string, quantity: number, price: number, lastUpdated: string, sku: string }} Item */
 
-const SORT_FIELDS = ['name', 'quantity', 'price', 'lastUpdated'];
+const SORT_FIELDS = ["name", "quantity", "price", "lastUpdated"];
 
 function createState() {
   /** @type {Item[]} */
@@ -10,13 +10,13 @@ function createState() {
   let _loading = false;
   let _error = null;
 
-  let _sortField = 'name';
-  let _sortDir = 'asc'; // 'asc' | 'desc'
-  let _filterText = '';
+  let _sortField = "name";
+  let _sortDir = "asc"; // 'asc' | 'desc'
+  let _filterText = "";
   let _submitting = false;
 
   /** @type {{ mode: 'none'|'create'|'edit'|'detail', item: Item|null }} */
-  let _modal = { mode: 'none', item: null };
+  let _modal = { mode: "none", item: null };
 
   /** @type {Set<Function>} */
   const _listeners = new Set();
@@ -45,18 +45,18 @@ function createState() {
       ? items.filter(
           (i) =>
             i.name.toLowerCase().includes(q) ||
-            (i.description ?? '').toLowerCase().includes(q) ||
-            String(i.id).toLowerCase().includes(q),
+            (i.description ?? "").toLowerCase().includes(q) ||
+            String(i.id).toLowerCase().includes(q)
         )
       : [...items];
 
     result.sort((a, b) => {
       let av = a[field];
       let bv = b[field];
-      if (typeof av === 'string') av = av.toLowerCase();
-      if (typeof bv === 'string') bv = bv.toLowerCase();
-      if (av < bv) return dir === 'asc' ? -1 : 1;
-      if (av > bv) return dir === 'asc' ? 1 : -1;
+      if (typeof av === "string") av = av.toLowerCase();
+      if (typeof bv === "string") bv = bv.toLowerCase();
+      if (av < bv) return dir === "asc" ? -1 : 1;
+      if (av > bv) return dir === "asc" ? 1 : -1;
       return 0;
     });
 
@@ -80,7 +80,9 @@ function createState() {
       if (idx === -1) {
         _items = [item, ..._items];
       } else {
-        _items = _items.map((i) => (String(i.id) === String(item.id) ? item : i));
+        _items = _items.map((i) =>
+          String(i.id) === String(item.id) ? item : i
+        );
       }
       notify();
     },
@@ -118,35 +120,34 @@ function createState() {
     setSort(field) {
       if (!SORT_FIELDS.includes(field)) return;
       if (_sortField === field) {
-        _sortDir = _sortDir === 'asc' ? 'desc' : 'asc';
+        _sortDir = _sortDir === "asc" ? "desc" : "asc";
       } else {
         _sortField = field;
-        _sortDir = 'asc';
+        _sortDir = "asc";
       }
       notify();
     },
 
     openCreate() {
-      _modal = { mode: 'create', item: null };
+      _modal = { mode: "create", item: null };
       notify();
     },
 
     openEdit(item) {
-      _modal = { mode: 'edit', item };
+      _modal = { mode: "edit", item };
       notify();
     },
 
     openDetail(item) {
-      _modal = { mode: 'detail', item };
+      _modal = { mode: "detail", item };
       notify();
     },
 
     closeModal() {
-      _modal = { mode: 'none', item: null };
+      _modal = { mode: "none", item: null };
       notify();
     },
   };
 }
 
 export const state = createState();
-

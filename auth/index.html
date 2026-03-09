@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Authentication</title>
+    <script src="app.js"></script>
+    <style>
+        login-form {
+            display: flex;
+            align-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <login-form on-login="onlogin"></login-form>
+    <register-form on-register="onregister"></register-form>
+    <script>
+        function gotonext(refresh_token) {
+            if (refresh_token) {
+                localStorage.setItem('refresh_token', refresh_token)
+                const params = new URLSearchParams(window.location.search)
+                const next = params.get('next')
+                if (next) location.replace(next)
+            }
+
+        }
+
+        function refresh() {
+            let rt = localStorage.getItem('refresh_token')
+            if (rt) {
+                let details = { 'refresh_token': rt }
+                fetch('/api/auth/auth/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(details)
+                }).then(res => {
+                    res.json().then(data => {
+                        gotonext(data.data.refresh_token)
+                    })
+                })
+            }
+        }
+        function onlogin(details) {
+            fetch('/api/auth/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(details)
+            }).then(res => {
+                res.json().then(data => {
+                    gotonext(data.data.refresh_token)
+                })
+            })
+        }
+        function onregister(details) {
+            fetch('/api/auth/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(details)
+            }).then(res => {
+                res.json().then(data => {
+                    gotonext(data.data.refresh_token)
+                })
+            })
+        }
+        refresh()
+    </script>
+
+</body>
