@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -119,14 +120,17 @@
         <section class="auth-grid" aria-label="Authentication options">
             <article class="auth-card">
                 <div class="auth-toggle" role="tablist" aria-label="Authentication form switcher">
-                    <button id="login-toggle" class="toggle-btn active" role="tab" aria-selected="true" aria-controls="login-panel" type="button">Login</button>
-                    <button id="register-toggle" class="toggle-btn" role="tab" aria-selected="false" aria-controls="register-panel" type="button">Register</button>
+                    <button id="login-toggle" class="toggle-btn active" role="tab" aria-selected="true"
+                        aria-controls="login-panel" type="button">Login</button>
+                    <button id="register-toggle" class="toggle-btn" role="tab" aria-selected="false"
+                        aria-controls="register-panel" type="button">Register</button>
                 </div>
                 <section id="login-panel" class="form-panel" role="tabpanel" aria-labelledby="login-toggle">
                     <h2>Login</h2>
                     <login-form on-login="onlogin"></login-form>
                 </section>
-                <section id="register-panel" class="form-panel" role="tabpanel" aria-labelledby="register-toggle" hidden>
+                <section id="register-panel" class="form-panel" role="tabpanel" aria-labelledby="register-toggle"
+                    hidden>
                     <h2>Create Account</h2>
                     <register-form on-register="onregister"></register-form>
                 </section>
@@ -152,12 +156,22 @@
         document.getElementById('login-toggle').addEventListener('click', () => setAuthMode('login'))
         document.getElementById('register-toggle').addEventListener('click', () => setAuthMode('register'))
 
+        async function confirmAuth() {
+            let res = await fetch('/api/auth/me/account')
+            let data = await res.json()
+            return data
+        }
+
         function gotonext(refresh_token) {
             if (refresh_token) {
-                localStorage.setItem('refresh_token', refresh_token)
-                const params = new URLSearchParams(window.location.search)
-                const next = params.get('next')
-                if (next) location.replace(next)
+                confirmAuth().then(data => {
+                    localStorage.setItem('refresh_token', refresh_token);
+                    const params = new URLSearchParams(window.location.search);
+                    const next = params.get('next');
+                    if (next) location.replace(next);
+                    location.replace('/me');
+                })
+
             }
 
         }
@@ -203,4 +217,5 @@
     </script>
 
 </body>
+
 </html>

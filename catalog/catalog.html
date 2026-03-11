@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fieldwork — Product Catalog</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #1a1714;
+    --paper: #f5f0e8;
+    --cream: #ede7d8;
+    --amber: #c8892a;
+    --amber-light: #e8b05a;
+    --rust: #b04a2a;
+    --sage: #5c7a5e;
+    --muted: #8a7f72;
+    --line: #d4cbbf;
+    --white: #fdfaf5;
+    --shadow: 0 2px 8px rgba(26,23,20,0.08), 0 1px 2px rgba(26,23,20,0.05);
+    --shadow-lg: 0 8px 32px rgba(26,23,20,0.12), 0 2px 8px rgba(26,23,20,0.08);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Instrument Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── Grain overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.5;
+  }
+
+  /* ── Header ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--ink);
+    padding: 0 2.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+    border-bottom: 2px solid var(--amber);
+  }
+
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    color: var(--paper);
+    letter-spacing: 0.02em;
+  }
+  .logo span { color: var(--amber); font-style: italic; }
+
+  .header-actions { display: flex; gap: 1rem; align-items: center; }
+
+  .btn {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 0.8125rem; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border: 1.5px solid currentColor;
+    padding: 0.45rem 1.1rem;
+    cursor: pointer; border-radius: 2px;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+    background: transparent;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--amber); border-color: var(--amber); color: var(--ink);
+  }
+  .btn-primary:hover { background: var(--amber-light); border-color: var(--amber-light); }
+
+  .btn-ghost { color: var(--paper); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); }
+
+  .btn-danger { color: var(--rust); border-color: var(--rust); }
+  .btn-danger:hover { background: var(--rust); color: white; }
+
+  .btn-outline { color: var(--ink); border-color: var(--line); background: var(--white); }
+  .btn-outline:hover { border-color: var(--ink); }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    position: relative; z-index: 1;
+    padding: 1.5rem 2.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--cream);
+    flex-wrap: wrap;
+  }
+
+  .search-wrap {
+    position: relative; flex: 1; min-width: 220px; max-width: 380px;
+  }
+  .search-wrap svg {
+    position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+  .search-input {
+    width: 100%; padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+    font-family: 'Instrument Sans', sans-serif; font-size: 0.875rem;
+    background: var(--white); border: 1.5px solid var(--line);
+    border-radius: 2px; color: var(--ink); outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--amber); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .filter-select {
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    padding: 0.55rem 0.9rem; background: var(--white);
+    border: 1.5px solid var(--line); border-radius: 2px;
+    color: var(--ink); cursor: pointer; outline: none;
+    transition: border-color 0.15s;
+  }
+  .filter-select:focus { border-color: var(--amber); }
+
+  .count-badge {
+    margin-left: auto;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    color: var(--muted); letter-spacing: 0.04em;
+  }
+
+  /* ── Grid ── */
+  .catalog-grid {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem 2.5rem;
+  }
+
+  /* ── Product Card ── */
+  .product-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
+    transition: box-shadow 0.2s, transform 0.2s;
+    animation: cardIn 0.35s ease both;
+  }
+  .product-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-image {
+    width: 100%; aspect-ratio: 4/3;
+    object-fit: cover; display: block;
+    background: var(--cream);
+  }
+
+  .card-image-placeholder {
+    width: 100%; aspect-ratio: 4/3;
+    background: var(--cream);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem; color: var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .card-body {
+    padding: 1.1rem 1.2rem; flex: 1; display: flex; flex-direction: column; gap: 0.35rem;
+  }
+
+  .card-category {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--amber);
+  }
+
+  .card-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem; line-height: 1.3; color: var(--ink);
+  }
+
+  .card-desc {
+    font-size: 0.8rem; color: var(--muted);
+    line-height: 1.55; flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .card-footer {
+    padding: 0.75rem 1.2rem;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .card-price {
+    font-family: 'DM Mono', monospace; font-size: 0.95rem; font-weight: 500;
+    color: var(--ink);
+  }
+
+  .card-stock {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.2rem 0.5rem; border-radius: 2px;
+  }
+  .stock-in  { background: #e8f0e8; color: var(--sage); }
+  .stock-low { background: #fdf4e0; color: #b07a10; }
+  .stock-out { background: #fae8e4; color: var(--rust); }
+
+  .card-actions {
+    padding: 0 1.2rem 1rem;
+    display: flex; gap: 0.5rem;
+  }
+  .card-actions .btn { flex: 1; font-size: 0.72rem; padding: 0.4rem; }
+
+  /* ── Empty State ── */
+  .empty-state {
+    position: relative; z-index: 1;
+    grid-column: 1/-1;
+    text-align: center; padding: 5rem 2rem;
+    color: var(--muted);
+  }
+  .empty-state svg { opacity: 0.2; margin-bottom: 1rem; }
+  .empty-state p { font-family: 'DM Serif Display', serif; font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--ink); }
+  .empty-state span { font-size: 0.875rem; }
+
+  /* ── Modal Overlay ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(26,23,20,0.55);
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+    width: 100%; max-width: 560px;
+    max-height: 90vh; overflow-y: auto;
+    transform: translateY(16px) scale(0.98);
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+  .modal-header {
+    padding: 1.4rem 1.6rem 1rem;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif; font-size: 1.35rem;
+    color: var(--ink);
+  }
+  .modal-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); padding: 0.25rem;
+    border-radius: 2px; transition: color 0.15s;
+    display: flex; align-items: center;
+  }
+  .modal-close:hover { color: var(--ink); }
+
+  .modal-body { padding: 1.4rem 1.6rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  .field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  label {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  }
+
+  input[type=text], input[type=number], textarea, select {
+    font-family: 'Instrument Sans', sans-serif; font-size: 0.875rem;
+    background: var(--white); border: 1.5px solid var(--line);
+    border-radius: 2px; color: var(--ink); padding: 0.55rem 0.75rem;
+    outline: none; transition: border-color 0.15s; width: 100%;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--amber); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .modal-footer {
+    padding: 1rem 1.6rem 1.4rem;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: flex-end; gap: 0.75rem;
+  }
+
+  /* ── Toast ── */
+  .toast-wrap {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 300;
+    display: flex; flex-direction: column; gap: 0.5rem;
+    pointer-events: none;
+  }
+  .toast {
+    font-family: 'DM Mono', monospace; font-size: 0.78rem;
+    background: var(--ink); color: var(--paper);
+    padding: 0.65rem 1rem; border-radius: 2px;
+    border-left: 3px solid var(--amber);
+    box-shadow: var(--shadow-lg);
+    animation: toastIn 0.3s ease both;
+  }
+  .toast.removing { animation: toastOut 0.3s ease both; }
+  @keyframes toastIn  { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:none; } }
+  @keyframes toastOut { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(16px); } }
+
+  /* ── Confirm Dialog ── */
+  .confirm-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(26,23,20,0.5);
+    display: flex; align-items: center; justify-content: center; padding: 1rem;
+    opacity: 0; pointer-events: none; transition: opacity 0.15s;
+  }
+  .confirm-overlay.open { opacity: 1; pointer-events: all; }
+  .confirm-box {
+    background: var(--white); border: 1px solid var(--line);
+    border-radius: 4px; box-shadow: var(--shadow-lg);
+    padding: 1.8rem; max-width: 360px; width: 100%;
+    text-align: center;
+  }
+  .confirm-box p { font-family: 'DM Serif Display', serif; font-size: 1.1rem; margin-bottom: 0.4rem; }
+  .confirm-box span { font-size: 0.82rem; color: var(--muted); }
+  .confirm-actions { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.4rem; }
+
+  @media (max-width: 600px) {
+    header, .toolbar { padding: 1rem; }
+    .catalog-grid { padding: 1rem; gap: 1rem; }
+    .field-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">Field<span>work</span></div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="openModal()">
+      + Add Product
+    </button>
+  </div>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" class="search-input" id="searchInput" placeholder="Search products…" oninput="renderCatalog()"/>
+  </div>
+  <select class="filter-select" id="categoryFilter" onchange="renderCatalog()">
+    <option value="">All Categories</option>
+  </select>
+  <select class="filter-select" id="stockFilter" onchange="renderCatalog()">
+    <option value="">All Stock</option>
+    <option value="in">In Stock</option>
+    <option value="low">Low Stock</option>
+    <option value="out">Out of Stock</option>
+  </select>
+  <span class="count-badge" id="countBadge">0 products</span>
+  <button class="btn btn-primary" onclick="openModal()">+ Add Product</button>
+</div>
+
+<!-- Catalog Grid -->
+<div class="catalog-grid" id="catalogGrid"></div>
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="onOverlayClick(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">New Product</h2>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="productId"/>
+      <div class="field">
+        <label for="fieldName">Product Name *</label>
+        <input type="text" id="fieldName" placeholder="e.g. Field Camera Strap"/>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fieldCategory">Category *</label>
+          <input type="text" id="fieldCategory" placeholder="e.g. Accessories" list="categoryList"/>
+          <datalist id="categoryList"></datalist>
+        </div>
+        <div class="field">
+          <label for="fieldSku">SKU</label>
+          <input type="text" id="fieldSku" placeholder="e.g. FW-0042"/>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fieldDesc">Description</label>
+        <textarea id="fieldDesc" placeholder="Brief product description…"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fieldPrice">Price ($) *</label>
+          <input type="number" id="fieldPrice" placeholder="0.00" min="0" step="0.01"/>
+        </div>
+        <div class="field">
+          <label for="fieldStock">Stock Qty *</label>
+          <input type="number" id="fieldStock" placeholder="0" min="0" step="1"/>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fieldImage">Image URL</label>
+        <input type="text" id="fieldImage" placeholder="https://…" oninput="previewImage()"/>
+      </div>
+      <img id="imgPreview" style="display:none;width:100%;max-height:180px;object-fit:cover;border-radius:2px;border:1px solid var(--line);" alt="Preview"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Dialog -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <p>Delete product?</p>
+    <span>This action cannot be undone.</span>
+    <div class="confirm-actions">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let products = JSON.parse(localStorage.getItem('fw_products') || '[]');
+let editingId = null;
+let confirmCallback = null;
+
+// Seed data if empty
+if (!products.length) {
+  products = [
+    { id: uid(), name: 'Waxed Canvas Tote', category: 'Bags', sku: 'FW-0001', description: 'Durable waxed canvas carry-all with leather handles and a brass clasp closure.', price: 89.00, stock: 24, image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80' },
+    { id: uid(), name: 'Leather Field Journal', category: 'Stationery', sku: 'FW-0002', description: 'Full-grain vegetable-tanned leather cover with 200 pages of dot-grid paper.', price: 48.50, stock: 6, image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=600&q=80' },
+    { id: uid(), name: 'Brass Compass', category: 'Navigation', sku: 'FW-0003', description: 'Traditional fluid-filled baseplate compass with declination adjustment ring.', price: 34.00, stock: 0, image: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=80' },
+    { id: uid(), name: 'Merino Wool Socks', category: 'Apparel', sku: 'FW-0004', description: 'Mid-weight merino blend, reinforced heel and toe. Available in sizes S-XL.', price: 18.00, stock: 52, image: 'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=600&q=80' },
+    { id: uid(), name: 'Titanium Spork', category: 'Utensils', sku: 'FW-0005', description: 'Ultra-light grade 1 titanium spork with a matte brushed finish. Only 14g.', price: 12.00, stock: 3, image: '' },
+    { id: uid(), name: 'Waterproof Gaiters', category: 'Apparel', sku: 'FW-0006', description: 'Lightweight nylon gaiters with instep strap and hook-loop closure system.', price: 55.00, stock: 17, image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80' },
+  ];
+  persist();
+}
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function persist() { localStorage.setItem('fw_products', JSON.stringify(products)); }
+
+// ── Categories ─────────────────────────────────────────────────────────────
+function getCategories() {
+  return [...new Set(products.map(p => p.category).filter(Boolean))].sort();
+}
+function refreshCategoryFilter() {
+  const sel = document.getElementById('categoryFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Categories</option>';
+  getCategories().forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    if (c === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+  const dl = document.getElementById('categoryList');
+  dl.innerHTML = '';
+  getCategories().forEach(c => {
+    const o = document.createElement('option'); o.value = c; dl.appendChild(o);
+  });
+}
+
+// ── Stock helpers ──────────────────────────────────────────────────────────
+function stockClass(qty) {
+  if (qty === 0)  return 'stock-out';
+  if (qty <= 5)   return 'stock-low';
+  return 'stock-in';
+}
+function stockLabel(qty) {
+  if (qty === 0)  return 'Out of Stock';
+  if (qty <= 5)   return `Low · ${qty}`;
+  return `In Stock · ${qty}`;
+}
+function stockFilterMatch(p) {
+  const f = document.getElementById('stockFilter').value;
+  if (!f) return true;
+  if (f === 'out') return p.stock === 0;
+  if (f === 'low') return p.stock > 0 && p.stock <= 5;
+  if (f === 'in')  return p.stock > 5;
+  return true;
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function renderCatalog() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('categoryFilter').value;
+  const grid = document.getElementById('catalogGrid');
+  refreshCategoryFilter();
+
+  const filtered = products.filter(p => {
+    const matchQ = !q || p.name.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q);
+    const matchC = !cat || p.category === cat;
+    return matchQ && matchC && stockFilterMatch(p);
+  });
+
+  document.getElementById('countBadge').textContent = `${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state">
+      <svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        <line x1="12" y1="12" x2="12" y2="16"/>
+        <line x1="10" y1="14" x2="14" y2="14"/>
+      </svg>
+      <p>No products found</p>
+      <span>Try adjusting your filters or add a new product</span>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((p, i) => `
+    <div class="product-card" style="animation-delay:${i * 40}ms">
+      ${p.image
+        ? `<img class="card-image" src="${escHtml(p.image)}" alt="${escHtml(p.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="card-image-placeholder" style="display:none">📦</div>`
+        : `<div class="card-image-placeholder">📦</div>`
+      }
+      <div class="card-body">
+        <div class="card-category">${escHtml(p.category || '—')}</div>
+        <div class="card-name">${escHtml(p.name)}</div>
+        <div class="card-desc">${escHtml(p.description || 'No description provided.')}</div>
+      </div>
+      <div class="card-footer">
+        <span class="card-price">$${Number(p.price).toFixed(2)}</span>
+        <span class="card-stock ${stockClass(p.stock)}">${stockLabel(p.stock)}</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-outline" onclick="openModal('${p.id}')">Edit</button>
+        <button class="btn btn-danger" onclick="confirmDelete('${p.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Modal ──────────────────────────────────────────────────────────────────
+function openModal(id) {
+  editingId = id || null;
+  const p = id ? products.find(x => x.id === id) : null;
+  document.getElementById('modalTitle').textContent = p ? 'Edit Product' : 'New Product';
+  document.getElementById('productId').value = p?.id || '';
+  document.getElementById('fieldName').value = p?.name || '';
+  document.getElementById('fieldCategory').value = p?.category || '';
+  document.getElementById('fieldSku').value = p?.sku || '';
+  document.getElementById('fieldDesc').value = p?.description || '';
+  document.getElementById('fieldPrice').value = p?.price ?? '';
+  document.getElementById('fieldStock').value = p?.stock ?? '';
+  document.getElementById('fieldImage').value = p?.image || '';
+  const prev = document.getElementById('imgPreview');
+  if (p?.image) { prev.src = p.image; prev.style.display = 'block'; }
+  else prev.style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fieldName').focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editingId = null;
+}
+
+function onOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function previewImage() {
+  const url = document.getElementById('fieldImage').value.trim();
+  const prev = document.getElementById('imgPreview');
+  if (url) { prev.src = url; prev.style.display = 'block'; }
+  else prev.style.display = 'none';
+}
+
+function saveProduct() {
+  const name  = document.getElementById('fieldName').value.trim();
+  const cat   = document.getElementById('fieldCategory').value.trim();
+  const price = parseFloat(document.getElementById('fieldPrice').value);
+  const stock = parseInt(document.getElementById('fieldStock').value, 10);
+
+  if (!name) { shake('fieldName'); return toast('Product name is required.'); }
+  if (!cat)  { shake('fieldCategory'); return toast('Category is required.'); }
+  if (isNaN(price) || price < 0) { shake('fieldPrice'); return toast('Enter a valid price.'); }
+  if (isNaN(stock) || stock < 0) { shake('fieldStock'); return toast('Enter a valid stock quantity.'); }
+
+  const data = {
+    name, category: cat,
+    sku:   document.getElementById('fieldSku').value.trim(),
+    description: document.getElementById('fieldDesc').value.trim(),
+    price, stock,
+    image: document.getElementById('fieldImage').value.trim(),
+  };
+
+  if (editingId) {
+    const idx = products.findIndex(p => p.id === editingId);
+    products[idx] = { ...products[idx], ...data };
+    toast('Product updated.');
+  } else {
+    products.unshift({ id: uid(), ...data });
+    toast('Product added.');
+  }
+
+  persist();
+  closeModal();
+  renderCatalog();
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = 'shake 0.35s ease';
+  el.style.borderColor = 'var(--rust)';
+  setTimeout(() => { el.style.borderColor = ''; el.style.animation = ''; }, 800);
+}
+
+// ── Confirm Delete ─────────────────────────────────────────────────────────
+function confirmDelete(id) {
+  document.getElementById('confirmOverlay').classList.add('open');
+  document.getElementById('confirmDeleteBtn').onclick = () => { deleteProduct(id); closeConfirm(); };
+}
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+}
+function deleteProduct(id) {
+  products = products.filter(p => p.id !== id);
+  persist();
+  renderCatalog();
+  toast('Product deleted.');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 300); }, 2500);
+}
+
+// ── Keyboard shortcuts ─────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeConfirm(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault(); document.getElementById('searchInput').focus();
+  }
+});
+
+// ── Shake animation ────────────────────────────────────────────────────────
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `@keyframes shake {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+}`;
+document.head.appendChild(shakeStyle);
+
+// ── Init ───────────────────────────────────────────────────────────────────
+renderCatalog();
+</script>
+</body>
+</html>
