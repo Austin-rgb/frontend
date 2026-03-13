@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AccessForge — Permission Management</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --accent: #7c5cfc;
+      --accent2: #00e5b0;
+      --text: #e8e8f0;
+      --muted: #6b6b88;
+      --granted: #00e5b0;
+      --denied: #ff4b6e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124, 92, 252, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124, 92, 252, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(124, 92, 252, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    forge-app {
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+  <script src="api.js"></script>
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════
+     SHARED DATA STORE & EVENT BUS
+═══════════════════════════════════ -->
+  <script src="data.js">
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-app>  root shell
+═══════════════════════════════════ -->
+  <script>
+    class ForgeApp extends HTMLElement {
+      connectedCallback() {
+        this.innerHTML = `
+      <forge-header></forge-header>
+      <div style="position:relative;z-index:1;display:grid;grid-template-columns:280px 1fr 380px;height:calc(100vh - 73px)">
+        <forge-user-sidebar></forge-user-sidebar>
+        <forge-perm-panel></forge-perm-panel>
+        <forge-detail-panel></forge-detail-panel>
+      </div>
+      <forge-toast-host></forge-toast-host>`;
+      }
+    }
+    customElements.define('forge-app', ForgeApp);
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-header>
+═══════════════════════════════════ -->
+  <script>
+    class ForgeHeader extends HTMLElement {
+      connectedCallback() {
+        const s = this.attachShadow({ mode: 'open' });
+        s.innerHTML = `
+      <style>
+        :host { display:block; position:relative; z-index:10; }
+        header {
+          display:flex; align-items:center; justify-content:space-between;
+          padding:20px 40px; border-bottom:1px solid #2a2a3a;
+          background:rgba(10,10,15,0.8); backdrop-filter:blur(20px);
+        }
+        .logo { display:flex; align-items:center; gap:12px; }
+        .logo-icon {
+          width:36px; height:36px;
+          background:linear-gradient(135deg,#7c5cfc,#00e5b0);
+          border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px;
+        }
+        .logo-text { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; letter-spacing:-0.5px; color:#e8e8f0; }
+        .logo-text span { color:#7c5cfc; }
+        .meta { display:flex; align-items:center; gap:20px; }
+        .badge {
+          font-family:'DM Mono',monospace; font-size:11px; padding:4px 12px;
+          border:1px solid #7c5cfc; border-radius:20px; color:#7c5cfc; letter-spacing:1px;
+        }
+        .dot {
+          width:8px; height:8px; border-radius:50%;
+          background:#00e5b0; box-shadow:0 0 8px #00e5b0; animation:pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+      </style>
+      <header>
+        <div class="logo">
+          <div class="logo-icon">🔐</div>
+          <div class="logo-text">Access<span>Forge</span></div>
+        </div>
+        <div class="meta">
+          <span class="badge">ADMIN CONSOLE</span>
+          <div class="dot"></div>
+        </div>
+      </header>`;
+      }
+    }
+    customElements.define('forge-header', ForgeHeader);
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-user-sidebar>
+═══════════════════════════════════ -->
+  <script src="user-sidebar.js">
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-user-item>
+═══════════════════════════════════ -->
+  <script src="user-item.js">
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-stat-card>
+═══════════════════════════════════ -->
+  <script src="stat-card.js">
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-perm-panel>
+═══════════════════════════════════ -->
+  <script src="perm-panel.js">
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-perm-group>
+═══════════════════════════════════ -->
+  <script src="perm-group.js">
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-perm-row>
+═══════════════════════════════════ -->
+  <script src="perm-row.js">
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-detail-panel>
+═══════════════════════════════════ -->
+  <script src="detail-panel.js">
+  </script>
+
+
+  <!-- ═══════════════════════════════════
+     <forge-toast-host>  +  <forge-toast>
+═══════════════════════════════════ -->
+  <script src="toast.js">
+  </script>
+
+
+  <!-- Mount point -->
+  <forge-app></forge-app>
+
+</body>
+
+</html>
