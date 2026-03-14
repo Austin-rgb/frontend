@@ -53,12 +53,12 @@ class ForgePermRow extends HTMLElement {
       </div>`;
 
     this._s.getElementById("gb").addEventListener("click", () => {
-      AppStore.setPerm(userId, pid, true);
-      AppStore.emit("toast", { type: "granted", perm: name });
+      appStore.setPerm(userId, pid, true);
+      appStore.emit("toast", { type: "granted", perm: name });
     });
     this._s.getElementById("db").addEventListener("click", () => {
-      AppStore.setPerm(userId, pid, false);
-      AppStore.emit("toast", { type: "denied", perm: name });
+      appStore.setPerm(userId, pid, false);
+      appStore.emit("toast", { type: "denied", perm: name });
     });
   }
 }

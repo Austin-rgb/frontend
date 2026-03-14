@@ -15,7 +15,8 @@ class ForgeDetailPanel extends HTMLElement {
       if (userId === this._userId) this._render();
     };
   }
-  connectedCallback() {
+  async connectedCallback() {
+    if (!appStore) appStore = await AppStore;
     this._s.innerHTML = `
       <style>
         :host {
@@ -58,15 +59,15 @@ class ForgeDetailPanel extends HTMLElement {
         <div class="stl">Recent Activity</div>
         <div id="act"></div>
       </div>`;
-    AppStore.on("user-selected", this._onUS);
-    AppStore.on("perm-changed", this._onPC);
+    appStore.on("user-selected", this._onUS);
+    appStore.on("perm-changed", this._onPC);
   }
   disconnectedCallback() {
-    AppStore.off("user-selected", this._onUS);
-    AppStore.off("perm-changed", this._onPC);
+    appStore.off("user-selected", this._onUS);
+    appStore.off("perm-changed", this._onPC);
   }
   async _render() {
-    let appStore = await AppStore;
+    if (!appStore) appStore = await AppStore;
     const user = appStore.USERS.find((u) => u.id === this._userId);
     if (!user) return;
     this._s.getElementById("emp").style.display = "none";

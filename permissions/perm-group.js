@@ -24,10 +24,10 @@ class ForgePermGroup extends HTMLElement {
   }
   connectedCallback() {
     this._render();
-    AppStore.on("perm-changed", this._onPC);
+    appStore.on("perm-changed", this._onPC);
   }
   disconnectedCallback() {
-    AppStore.off("perm-changed", this._onPC);
+    appStore.off("perm-changed", this._onPC);
   }
   attributeChangedCallback() {
     if (this.isConnected) this._render();
@@ -39,8 +39,8 @@ class ForgePermGroup extends HTMLElement {
     const icon = this.getAttribute("group-icon") || "";
     const color = this.getAttribute("group-color") || "#7c5cfc";
     const userId = parseInt(this.getAttribute("user-id"));
-    const user = AppStore.USERS.find((u) => u.id === userId);
-    const grp = AppStore.PERMISSION_GROUPS.find((g) => g.id === id);
+    const user = appStore.USERS.find((u) => u.id === userId);
+    const grp = appStore.PERMISSION_GROUPS.find((g) => g.id === id);
     if (!grp || !user) return;
     const gc = grp.permissions.filter((p) => user.perms[p.id]).length;
 
@@ -83,8 +83,8 @@ class ForgePermGroup extends HTMLElement {
     const id = this.getAttribute("group-id");
     const userId = parseInt(this.getAttribute("user-id"));
     const filter = this.getAttribute("filter") || "all";
-    const user = AppStore.USERS.find((u) => u.id === userId);
-    const grp = AppStore.PERMISSION_GROUPS.find((g) => g.id === id);
+    const user = appStore.USERS.find((u) => u.id === userId);
+    const grp = appStore.PERMISSION_GROUPS.find((g) => g.id === id);
     const rows = this._s.getElementById("rows");
     if (!grp || !user || !rows) return;
     rows.innerHTML = "";

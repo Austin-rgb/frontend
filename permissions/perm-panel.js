@@ -17,7 +17,8 @@ class ForgePermPanel extends HTMLElement {
     };
   }
   async connectedCallback() {
-    let appStore = await AppStore;
+    if (!appStore) appStore = await AppStore;
+
     this._s.innerHTML = `
       <style>
         :host { display:block; padding:32px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#2a2a3a transparent; }
@@ -103,13 +104,12 @@ class ForgePermPanel extends HTMLElement {
     appStore.on("perm-changed", this._onPermChanged);
   }
   async disconnectedCallback() {
-    let appStore = await AppStore;
     appStore.off("user-selected", this._onUserSelected);
     appStore.off("perm-changed", this._onPermChanged);
   }
 
   async _refresh() {
-    let appStore = await AppStore;
+    if (!appStore) appStore = await AppStore;
 
     const user = appStore.USERS.find((u) => u.id === this._userId);
     if (!user) return;
@@ -148,3 +148,4 @@ class ForgePermPanel extends HTMLElement {
   }
 }
 customElements.define("forge-perm-panel", ForgePermPanel);
+

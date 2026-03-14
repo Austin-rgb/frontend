@@ -2,6 +2,59 @@
 //      <forge-user-sidebar>
 // ═══════════════════════════════════ -->
 
+class UserSearch extends HTMLElement {
+  constructor() {
+    super();
+    this._s = this.attachShadow({ mode: "open" });
+    this._username = "";
+  }
+
+  connectedCallback() {
+    this._s.innerHTML = `
+    <div>
+    <input type="text" placeholder="username" id="username">
+    <button id="search" >Search</button>
+    </div>
+    `;
+    let username_input = this._s.getElementById("username");
+    username_input.addEventListener("input", (e) => {
+      console.log("inputting");
+      if (search_button.innerText == "Search") return;
+      search_button.innerText = "Search";
+      //search_button.removeEventListener("click");
+      search_button.addEventListener("click", search);
+    });
+    let search_button = this._s.getElementById("search");
+    search_button.addEventListener("click", (e) => {
+      console.log("trying to search");
+      let username = username_input.value;
+      fetch("/api/auth/user_id/username/" + username).then((res) => {
+        if (res.status != 200) {
+          search_button.textContent = "Not Found";
+          return;
+        }
+        search_button.textContent = "Add User";
+        //search_button.removeEventListener("click");
+        search_button.addEventListener("click", (e) => add_user(username));
+      });
+    });
+
+    let add_user = (username) => {
+      appStore.USERS.push({
+        id: appStore.USERS.length + 1,
+        name: username,
+        email: "no email",
+        role: "General",
+        color: 0,
+        perms: {},
+      });
+      appStore.emit("user-added");
+    };
+  }
+}
+
+customElements.define("user-search", UserSearch);
+
 class ForgeUserSidebar extends HTMLElement {
   constructor() {
     super();
@@ -11,7 +64,7 @@ class ForgeUserSidebar extends HTMLElement {
     this._total_users = 0;
   }
   async connectedCallback() {
-    let appStore = await AppStore;
+    if (!appStore) appStore = await AppStore;
     this._s.innerHTML = `
       <style>
         :host {
@@ -43,14 +96,17 @@ class ForgeUserSidebar extends HTMLElement {
       </div>
       <div class="sec">
         <span class="lbl" id="lbl">Users (${appStore.USERS.length})</span>
+        <user-search></user-search>
         <div id="list"></div>
-      </div>`;
+      </div>
+      `;
 
     this._s
       .getElementById("q")
       .addEventListener("input", (e) => this._filter(e.target.value));
     this._render(appStore.USERS);
     appStore.on("perm-changed", this._onPermChanged);
+    appStore.on("user-added", (e) => this._render(appStore.USERS));
 
     /* bubble user-select up through shadow roots */
     this._s.getElementById("list").addEventListener("user-select", (e) => {
@@ -67,7 +123,8 @@ class ForgeUserSidebar extends HTMLElement {
     });
   }
   disconnectedCallback() {
-    AppStore.off("perm-changed", this._onPermChanged);
+    appStore.off("perm-changed", this._onPermChanged);
+    appStore.off("user-added");
   }
 
   _render(users) {
@@ -84,8 +141,8 @@ class ForgeUserSidebar extends HTMLElement {
       list.appendChild(el);
     });
   }
-  async _filter(q) {
-    const f = (await AppStore).USERS.filter(
+  _filter(q) {
+    const f = appStore.USERS.filter(
       (u) =>
         u.name.toLowerCase().includes(q.toLowerCase()) ||
         u.role.toLowerCase().includes(q.toLowerCase()),
@@ -98,8 +155,7 @@ class ForgeUserSidebar extends HTMLElement {
     if (el)
       el.setAttribute(
         "perm-count",
-        Object.keys((await AppStore).USERS.find((u) => u.id === userId).perms)
-          .length,
+        Object.keys(appStore.USERS.find((u) => u.id === userId).perms).length,
       );
   }
 }

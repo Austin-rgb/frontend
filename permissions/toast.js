@@ -8,7 +8,9 @@ class ForgeToastHost extends HTMLElement {
     this._s = this.attachShadow({ mode: "open" });
     this._onToast = ({ type, perm }) => this._show(type, perm);
   }
-  connectedCallback() {
+  async connectedCallback() {
+    if (!appStore) appStore = await AppStore;
+
     this._s.innerHTML = `
       <style>
         :host {
@@ -17,10 +19,10 @@ class ForgeToastHost extends HTMLElement {
         }
         forge-toast { pointer-events:auto; }
       </style>`;
-    AppStore.on("toast", this._onToast);
+    appStore.on("toast", this._onToast);
   }
   disconnectedCallback() {
-    AppStore.off("toast", this._onToast);
+    appStore.off("toast", this._onToast);
   }
   _show(type, perm) {
     const t = document.createElement("forge-toast");
