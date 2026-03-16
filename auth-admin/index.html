@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Authentication</title>
+    <script src="app.js"></script>
+    <style>
+        :root {
+            --bg-top: #f4f9ff;
+            --bg-bottom: #e5eef9;
+            --surface: #ffffffd9;
+            --text-main: #1f2a37;
+            --text-muted: #617182;
+            --border: #d6e0ec;
+            --shadow: 0 18px 42px -24px rgba(23, 40, 61, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at 20% 10%, #ffffffc9 0%, transparent 34%),
+                linear-gradient(150deg, var(--bg-top), var(--bg-bottom));
+            padding: 20px;
+        }
+
+        main {
+            width: min(940px, 100%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+            padding: clamp(20px, 4.5vw, 36px);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            letter-spacing: 0.01em;
+        }
+
+        p {
+            margin: 0 0 24px;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .auth-grid {
+            width: min(460px, 100%);
+            margin: 0 auto;
+        }
+
+        .auth-card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: #fff;
+            padding: 14px;
+        }
+
+        .auth-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
+            padding: 6px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #f4f8fc;
+        }
+
+        .toggle-btn {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #324253;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .toggle-btn.active {
+            color: #12304e;
+            background: #fff;
+            box-shadow: 0 4px 14px -10px rgba(18, 48, 78, 0.8);
+        }
+
+        .auth-card h2 {
+            margin: 4px 0 12px;
+            font-size: 1.05rem;
+        }
+
+        .form-panel[hidden] {
+            display: none;
+        }
+
+        login-form,
+        register-form {
+            display: block;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>Welcome Back Austine</h1>
+        <p>Let's confirm it's you to continue.</p>
+        <section class="auth-grid" aria-label="Authentication options">
+            <article class="auth-card">
+                <div class="auth-toggle" role="tablist" aria-label="Authentication form switcher">
+                    <button id="login-toggle" class="toggle-btn active" role="tab" aria-selected="true"
+                        aria-controls="login-panel" type="button">Login</button>
+
+                </div>
+                <section id="login-panel" class="form-panel" role="tabpanel" aria-labelledby="login-toggle">
+                    <h2>Login</h2>
+                    <login-form on-login="onlogin"></login-form>
+                </section>
+
+            </article>
+        </section>
+    </main>
+    <script>
+        function setAuthMode(mode) {
+            const isLogin = mode === 'login'
+            const loginToggle = document.getElementById('login-toggle')
+            const loginPanel = document.getElementById('login-panel')
+
+            loginToggle.classList.toggle('active', isLogin)
+            loginToggle.setAttribute('aria-selected', String(isLogin))
+            loginPanel.hidden = !isLogin
+        }
+
+        document.getElementById('login-toggle').addEventListener('click', () => setAuthMode('login'))
+
+        function gotonext() {
+            const params = new URLSearchParams(window.location.search);
+            const next = params.get('next');
+            if (next) location.replace(next);
+            else location.replace('/me');
+
+        }
+
+        function onlogin(details) {
+            fetch('/api/auth/auth/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(details)
+            }).then(res => {
+                res.json().then(data => {
+                    gotonext()
+                })
+            })
+        }
+
+    </script>
+
+</body>
+
+</html>
