@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="css2.css" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ink: #0d0d0d;
+      --paper: #f5f2eb;
+      --cream: #ede9df;
+      --accent: #c84b2f;
+      --accent-light: #e8604a;
+      --muted: #8a8070;
+      --border: #d4cfc4;
+      --success: #2e7d52;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 60px;
+    }
+
+    /* Global grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="payment-page.js"></script>
+  <script src="token-verification.js"></script>
+  <script src="user-form.js"></script>
+  <script src="product-list.js"></script>
+  <script src="app-root.js"></script>
+  <app-root></app-root>
+
+  <script>
+    
+    /* ─────────────────────────────────────────────
+       HELPERS
+    ───────────────────────────────────────────── */
+    const fmt = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+    const randomToken = () => String(Math.floor(100000 + Math.random() * 900000));
+
+    /* ─────────────────────────────────────────────
+       <cart-view>  — wraps product-list + checkout-summary
+    ───────────────────────────────────────────── */
+    class CartView extends HTMLElement {
+      connectedCallback() {
+        this.attachShadow({ mode: 'open' });
+        this.shadowRoot.innerHTML = `
+      <style>
+        ${baseStyles}
+        :host { display: flex; flex-direction: column; gap: 32px; }
+      </style>
+      <product-list></product-list>
+      <checkout-summary></checkout-summary>
+    `;
+      }
+    }
+    customElements.define('cart-view', CartView);
+
+
+    /* ─────────────────────────────────────────────
+       <checkout-summary>
+    ───────────────────────────────────────────── */
+    class CheckoutSummary extends HTMLElement {
+      connectedCallback() {
+        this.attachShadow({ mode: 'open' });
+        Store.subscribe(state => this._render(state));
+      }
+
+      _render(state) {
+        const total = Store.getTotal();
+        const items = state.products.filter(p => p.quantity > 0);
+        const count = items.reduce((s, p) => s + p.quantity, 0);
+
+        this.shadowRoot.innerHTML = `
+      <style>
+        ${baseStyles}
+        :host { display: block; }
+        .summary-box {
+          background: #0d0d0d; color: #f5f2eb;
+          border-radius: 8px; padding: 28px 32px;
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 24px; flex-wrap: wrap;
+        }
+        .summary-left .label {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+          color: #8a8070; margin-bottom: 6px;
+        }
+        .summary-left .items {
+          font-size: 13px; color: #c9c3b8; margin-bottom: 4px;
+        }
+        .summary-left .amount {
+          font-size: clamp(28px, 5vw, 42px);
+          font-weight: 800; letter-spacing: -0.03em; line-height: 1;
+          color: #f5f2eb;
+        }
+        .checkout-btn {
+          font-family: 'Syne', sans-serif;
+          font-size: 15px; font-weight: 700;
+          background: #c84b2f; color: #fff;
+          border: none; border-radius: 6px;
+          padding: 16px 32px; cursor: pointer;
+          letter-spacing: 0.01em;
+          transition: background .2s, transform .1s;
+          white-space: nowrap;
+          opacity: ${total === 0 ? '0.4' : '1'};
+          pointer-events: ${total === 0 ? 'none' : 'auto'};
+        }
+        .checkout-btn:hover { background: #e8604a; transform: translateY(-1px); }
+        .checkout-btn:active { transform: translateY(0); }
+        .empty-note {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px; color: #8a8070; margin-top: 4px;
+        }
+      </style>
+      <div class="summary-box">
+        <div class="summary-left">
+          <div class="label">Order Total</div>
+          ${count > 0
+            ? `<div class="items">${count} item${count !== 1 ? 's' : ''} selected</div>`
+            : `<div class="empty-note">Add items to continue</div>`}
+          <div class="amount">${fmt(total)}</div>
+        </div>
+        <button class="checkout-btn">Checkout →</button>
+      </div>
+    `;
+
+        this.shadowRoot.querySelector('.checkout-btn')?.addEventListener('click', () => {
+          if (Store.getTotal() > 0) Store.setStep('form');
+        });
+      }
+    }
+    customElements.define('checkout-summary', CheckoutSummary);
+
+  </script>
+
+</body>
+
+</html>
