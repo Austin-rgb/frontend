@@ -4,16 +4,7 @@ document.querySelectorAll(".add-to-cart").forEach((link) => {
 
     const url = this.href;
 
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then(() => {
-      console.log("Logged:", url);
-      // optional: navigate after logging
-      // window.location.href = url;
-    });
+    fetch(url);
   });
 });
 
@@ -25,8 +16,8 @@ document.querySelectorAll(".start-order").forEach((link) => {
     let productId = url.split("/").pop(); // extract product ID from URL
 
     // Add product id to cart before starting order
-    fetch("/cart/add/" + productId).then(() => {
-location.replace(url); // navigate to order page after adding to cart
+    fetch("/cart/add?product=" + productId + "&qty=1").then(() => {
+      location.href = "/app/checkout/"; // navigate to checkout page after adding to cart
     });
   });
 });
