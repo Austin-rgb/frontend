@@ -146,7 +146,7 @@ let bootstrap = async () => {
   };
 };
 let Store = bootstrap();
-
+let store = undefined;
 /* ═══════════════════════════════════════════════
        <app-header>
     ═══════════════════════════════════════════════ */
@@ -686,11 +686,11 @@ class ProductModal extends HTMLElement {
     });
   }
 
-  _open(id) {
+  async _open(id) {
     const sr = this.shadowRoot;
     const $ = (i) => sr.getElementById(i);
     this._eid = id || null;
-    const p = id ? Store.getAll().find((x) => x.id === id) : null;
+    const p = id ? (await Store).getAll().find((x) => x.id === id) : null;
     $("title").textContent = p ? "Edit Product" : "New Product";
     $("n").value = p?.name || "";
     $("c").value = p?.category || "";
@@ -721,7 +721,7 @@ class ProductModal extends HTMLElement {
     setTimeout(() => el.classList.remove("err"), 800);
   }
 
-  _save() {
+  async _save() {
     const sr = this.shadowRoot;
     const $v = (id) => sr.getElementById(id).value;
     const name = $v("n").trim(),
@@ -758,7 +758,7 @@ class ProductModal extends HTMLElement {
       image: $v("img").trim(),
     };
     if (this._eid) {
-      Store.update(this._eid, data);
+      (await Store).update(this._eid, data);
       emit("toast", { msg: "Product updated." });
     } else {
       api.createProduct(data);

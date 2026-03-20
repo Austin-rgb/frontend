@@ -159,7 +159,7 @@ class CheckoutBar extends HTMLElement {
 
     // Checkout button
     s.querySelector(".checkout-btn").addEventListener("click", () => {
-      const url = this.getAttribute("checkout-url") || "/checkout";
+      const url = this.getAttribute("checkout-url") || "/app/checkout/";
       this.dispatchEvent(
         new CustomEvent("checkout", {
           bubbles: true,
@@ -348,7 +348,7 @@ class CheckoutBar extends HTMLElement {
         --cb-text:      #e8e8e8;
         --cb-muted:     #888;
         --cb-border:    #2a2a2a;
-        --cb-height:    64px;
+        --cb-height:    44px;
         --cb-font:      'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
         --cb-radius:    4px;
         --cb-z:         1000;
