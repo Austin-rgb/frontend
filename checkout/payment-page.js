@@ -13,7 +13,7 @@ class PaymentPage extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>
-        ${baseStyles}
+        
         :host { display: block; }
         .card {
           background: #fff; border: 1.5px solid #d4cfc4;

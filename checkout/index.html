@@ -6,9 +6,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com/">
-  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
-  <link href="css2.css" rel="stylesheet">
   <style>
     *,
     *::before,
@@ -68,7 +65,7 @@
   <app-root></app-root>
 
   <script>
-    
+
     /* ─────────────────────────────────────────────
        HELPERS
     ───────────────────────────────────────────── */
@@ -83,7 +80,6 @@
         this.attachShadow({ mode: 'open' });
         this.shadowRoot.innerHTML = `
       <style>
-        ${baseStyles}
         :host { display: flex; flex-direction: column; gap: 32px; }
       </style>
       <product-list></product-list>
@@ -100,17 +96,17 @@
     class CheckoutSummary extends HTMLElement {
       connectedCallback() {
         this.attachShadow({ mode: 'open' });
-        Store.subscribe(state => this._render(state));
+        store.subscribe(state => this._render(state));
       }
 
       _render(state) {
-        const total = Store.getTotal();
+        const total = store.getTotal();
         const items = state.products.filter(p => p.quantity > 0);
         const count = items.reduce((s, p) => s + p.quantity, 0);
 
         this.shadowRoot.innerHTML = `
       <style>
-        ${baseStyles}
+        
         :host { display: block; }
         .summary-box {
           background: #0d0d0d; color: #f5f2eb;
@@ -163,7 +159,7 @@
     `;
 
         this.shadowRoot.querySelector('.checkout-btn')?.addEventListener('click', () => {
-          if (Store.getTotal() > 0) Store.setStep('form');
+          if (store.getTotal() > 0) store.setStep('form');
         });
       }
     }

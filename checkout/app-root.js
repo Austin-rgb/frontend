@@ -1,18 +1,30 @@
 /* ─────────────────────────────────────────────
        STORE
     ───────────────────────────────────────────── */
-const Store = (() => {
+const Store = (async () => {
+  let items = await (await fetch("/api/cart/get")).json();
+  let products = [];
+  let total = 0;
+  for (item of items) {
+    let product = await (
+      await fetch("/api/catalog/products/" + item.product)
+    ).json();
+    total += product.price;
+    product.quantity = item.qty;
+    products.push(product);
+  }
+  let res = undefined;
+  try {
+    res = await fetch("/api/auth/me/account");
+  } catch {
+    console.log("connecting as guest");
+  }
+  let user = await res.json();
   const _state = {
     step: "cart", // cart | form | verify | payment
-    products: [
-      { id: 1, name: "Analog Film Camera", price: 149.0, quantity: 1 },
-      { id: 2, name: "Prime Lens 35mm f/1.8", price: 229.0, quantity: 0 },
-      { id: 3, name: "Leather Camera Strap", price: 49.0, quantity: 1 },
-      { id: 4, name: "Film Roll Pack (5×)", price: 28.0, quantity: 2 },
-      { id: 5, name: "Darkroom Timer", price: 75.0, quantity: 0 },
-    ],
+    products,
     token: null,
-    user: { name: "", email: "" },
+    user: { name: user?.user_id, email: user?.email },
   };
 
   // Attempt to restore cart from localStorage
@@ -46,7 +58,7 @@ const Store = (() => {
 
     subscribe(fn) {
       _listeners.push(fn);
-      fn(Store.getState());
+      fn(store.getState());
     },
 
     setQuantity(id, qty) {
@@ -70,6 +82,11 @@ const Store = (() => {
 
     setUser(user) {
       _state.user = { ...user };
+      fetch("/api/auth/passwordless/register/start", {
+        method: "post",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(user),
+      });
       _notify();
     },
 
@@ -79,26 +96,22 @@ const Store = (() => {
   };
 })();
 
-const baseStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :host { display: block; }
-`;
+let store = undefined;
 
 /* ─────────────────────────────────────────────
        <app-root>
     ───────────────────────────────────────────── */
 class AppRoot extends HTMLElement {
-  connectedCallback() {
+  async connectedCallback() {
+    if (!store) store = await Store;
     this.attachShadow({ mode: "open" });
-    this._render(Store.getState());
-    Store.subscribe((state) => this._render(state));
+    this._render(store.getState());
+    store.subscribe((state) => this._render(state));
   }
 
   _render(state) {
     this.shadowRoot.innerHTML = `
       <style>
-        ${baseStyles}
         :host { display: flex; flex-direction: column; align-items: center; width: 100%; }
         .header {
           width: 100%;

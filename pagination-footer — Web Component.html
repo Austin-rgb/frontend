@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pagination-footer — Web Component</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f12;
+      --surface:  #161a1f;
+      --border:   #252b33;
+      --muted:    #3a424d;
+      --text:     #c8d0d9;
+      --subtle:   #6b7885;
+      --accent:   #f5a623;
+      --accent-dim: #7a5110;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4rem;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+    header h1 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: .05em;
+    }
+    header p {
+      font-size: .85rem;
+      color: var(--subtle);
+      max-width: 52ch;
+      line-height: 1.6;
+    }
+
+    .demo-grid {
+      display: grid;
+      gap: 2rem;
+    }
+
+    .demo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .demo-card__label {
+      padding: .6rem 1.2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      color: var(--subtle);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .demo-card__label span {
+      color: var(--accent);
+    }
+    .demo-card__body {
+      padding: 1.5rem 1.2rem;
+    }
+
+    .resize-demo {
+      resize: horizontal;
+      overflow: hidden;
+      min-width: 200px;
+      max-width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .resize-demo__handle {
+      padding: .5rem 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .resize-demo__handle::before {
+      content: '↔';
+      color: var(--accent);
+    }
+    .resize-demo__body {
+      padding: 1.2rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      padding: 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+    .control-group label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      color: var(--subtle);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .control-group input[type=range] {
+      accent-color: var(--accent);
+      width: 140px;
+    }
+    .control-group .val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .82rem;
+      color: var(--accent);
+    }
+
+    section > h2 {
+      font-size: .78rem;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--subtle);
+      margin-bottom: 1rem;
+      padding-bottom: .5rem;
+      border-bottom: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>&lt;pagination-footer /&gt;</h1>
+  <p>A self-contained Web Component with responsive layout, intelligent ellipsis windowing, and zero dependencies. Resize the demo panel to see adaptive degradation.</p>
+</header>
+
+<!-- ─── Interactive Playground ─── -->
+<section>
+  <h2>// interactive playground</h2>
+  <div class="controls">
+    <div class="control-group">
+      <label>pages</label>
+      <input type="range" id="ctrl-pages" min="1" max="500" value="20" />
+      <span class="val" id="val-pages">20</span>
+    </div>
+    <div class="control-group">
+      <label>current page</label>
+      <input type="range" id="ctrl-page" min="1" max="20" value="5" />
+      <span class="val" id="val-page">5</span>
+    </div>
+    <div class="control-group">
+      <label>limit</label>
+      <input type="range" id="ctrl-limit" min="5" max="100" step="5" value="10" />
+      <span class="val" id="val-limit">10</span>
+    </div>
+  </div>
+  <br/>
+  <pagination-footer id="live" pages="20" page="5" limit="10"></pagination-footer>
+</section>
+
+<!-- ─── Resize Demo ─── -->
+<section>
+  <h2>// responsive resize (drag the handle →)</h2>
+  <div class="resize-demo">
+    <div class="resize-demo__handle">drag to resize</div>
+    <div class="resize-demo__body">
+      <pagination-footer pages="50" page="25" limit="10"></pagination-footer>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Static Scenarios ─── -->
+<section>
+  <h2>// static scenarios</h2>
+  <div class="demo-grid">
+
+    <div class="demo-card">
+      <div class="demo-card__label">edge — near start <span>page=2 / pages=20</span></div>
+      <div class="demo-card__body">
+        <pagination-footer pages="20" page="2" limit="10"></pagination-footer>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__label">edge — near end <span>page=19 / pages=20</span></div>
+      <div class="demo-card__body">
+        <pagination-footer pages="20" page="19" limit="10"></pagination-footer>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__label">first page <span>page=1 / pages=20</span></div>
+      <div class="demo-card__body">
+        <pagination-footer pages="20" page="1" limit="10"></pagination-footer>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__label">last page <span>page=20 / pages=20</span></div>
+      <div class="demo-card__body">
+        <pagination-footer pages="20" page="20" limit="10"></pagination-footer>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__label">large set <span>page=5000 / pages=10000</span></div>
+      <div class="demo-card__body">
+        <pagination-footer pages="10000" page="5000" limit="25"></pagination-footer>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__label">single page <span>pages=1</span></div>
+      <div class="demo-card__body">
+        <pagination-footer pages="1" page="1" limit="10"></pagination-footer>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__label">two pages <span>pages=2</span></div>
+      <div class="demo-card__body">
+        <pagination-footer pages="2" page="1" limit="10"></pagination-footer>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     COMPONENT DEFINITION
+════════════════════════════════════════════ -->
+<script>
+class PaginationFooter extends HTMLElement {
+
+  /* ── Lifecycle ─────────────────────────────────────────── */
+
+  static get observedAttributes() {
+    return ['pages', 'page', 'limit'];
+  }
+
+  constructor() {
+    super();
+    this._root   = this.attachShadow({ mode: 'open' });
+    this._maxBtn = 9;   // current derived max; updated by ResizeObserver
+    this._ro     = null;
+  }
+
+  connectedCallback() {
+    this._initResizeObserver();
+    this._render();
+  }
+
+  disconnectedCallback() {
+    if (this._ro) this._ro.disconnect();
+  }
+
+  attributeChangedCallback() {
+    this._render();
+  }
+
+  /* ── Attribute Helpers ─────────────────────────────────── */
+
+  _num(attr, fallback = 1) {
+    const v = parseInt(this.getAttribute(attr), 10);
+    return Number.isFinite(v) ? v : fallback;
+  }
+
+  /* ── URL Helper ────────────────────────────────────────── */
+
+  /**
+   * buildLink(p) → "?page=X&limit=Y"
+   * Preserves any existing query params in the current URL.
+   */
+  buildLink(p) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('page',  p);
+      url.searchParams.set('limit', this._num('limit', 10));
+      return url.search; // e.g. "?page=3&limit=10&sort=name"
+    } catch {
+      return `?page=${p}&limit=${this._num('limit', 10)}`;
+    }
+  }
+
+  /* ── Responsive: ResizeObserver ────────────────────────── */
+
+  _initResizeObserver() {
+    this._ro = new ResizeObserver(entries => {
+      const w    = entries[0]?.contentRect.width ?? this.offsetWidth;
+      const next = this.getMaxVisibleButtons(w);
+      if (next !== this._maxBtn) {
+        this._maxBtn = next;
+        this._render();
+      }
+    });
+    this._ro.observe(this);
+  }
+
+  /**
+   * getMaxVisibleButtons(width) → number
+   * Maps container width to a maximum number of page buttons to render.
+   * The count includes numbered buttons only (not Prev/Next/ellipsis).
+   */
+  getMaxVisibleButtons(width) {
+    if (width <  320) return 1;   // minimal: current only
+    if (width <  420) return 3;   // 1 … [cur] … last
+    if (width <  560) return 5;
+    if (width <  720) return 7;
+    return 9;
+  }
+
+  /* ── Core Pagination Logic ─────────────────────────────── */
+
+  /**
+   * computePages(page, pages, maxVisible) → Array<number|'...'>
+   *
+   * Returns an ordered array of page numbers and ellipsis tokens.
+   * Always includes: 1, `pages`, and `page` (current).
+   * Builds a window of ±delta around current, then fills with anchors.
+   * Gaps ≥ 2 between consecutive entries become '...' tokens.
+   *
+   * @param {number} page       - current page (1-based)
+   * @param {number} pages      - total pages
+   * @param {number} maxVisible - max page buttons (numbers only)
+   * @returns {Array<number|'...'>}
+   */
+  computePages(page, pages, maxVisible) {
+    // Clamp inputs
+    pages = Math.max(1, pages);
+    page  = Math.min(Math.max(1, page), pages);
+
+    // Trivial case: fits entirely
+    if (pages <= maxVisible) {
+      return Array.from({ length: pages }, (_, i) => i + 1);
+    }
+
+    // Minimal mode: only show current
+    if (maxVisible <= 1) return [page];
+
+    // How many slots do we have after reserving first + last?
+    // Window = slots around current; delta = half-window size
+    // Reserve 2 slots for anchors (1 and pages), rest for window
+    const windowSize = Math.max(1, maxVisible - 2);
+    const delta      = Math.floor(windowSize / 2);
+
+    // Build the sliding window [low…high] centred on current
+    let low  = page - delta;
+    let high = page + delta;
+
+    // If window is even-sized, bias one extra slot to the right
+    if (windowSize % 2 === 0) high += 1;
+
+    // Shift window if it undershoots/overshoots
+    if (low  < 2)          { high += (2 - low);      low  = 2; }
+    if (high > pages - 1)  { low  -= (high - (pages - 1)); high = pages - 1; }
+
+    // Final clamp (edge: pages is very small)
+    low  = Math.max(2, low);
+    high = Math.min(pages - 1, high);
+
+    // Collect all pages: anchors + window, deduplicated + sorted
+    const set = new Set([1, pages]);
+    for (let p = low; p <= high; p++) set.add(p);
+    const sorted = [...set].sort((a, b) => a - b);
+
+    // Insert ellipsis tokens for gaps ≥ 2
+    const result = [];
+    for (let i = 0; i < sorted.length; i++) {
+      if (i > 0 && sorted[i] - sorted[i - 1] > 1) {
+        result.push('...');
+      }
+      result.push(sorted[i]);
+    }
+
+    return result;
+  }
+
+  /* ── Render ────────────────────────────────────────────── */
+
+  _render() {
+    const pages = this._num('pages', 1);
+    const page  = Math.min(Math.max(this._num('page',  1), 1), Math.max(pages, 1));
+    const limit = this._num('limit', 10);
+
+    const hasPrev = page > 1;
+    const hasNext = page < pages;
+    const tokens  = this.computePages(page, pages, this._maxBtn);
+
+    const prevHref = this.buildLink(page - 1);
+    const nextHref = this.buildLink(page + 1);
+
+    /* Build button HTML for each token */
+    const btnHTML = tokens.map(t => {
+      if (t === '...') {
+        return `<span class="ellipsis" aria-hidden="true">…</span>`;
+      }
+      if (t === page) {
+        return `<span class="btn current" aria-current="page" aria-label="Page ${t}">${t}</span>`;
+      }
+      return `<a class="btn" href="${this.buildLink(t)}" aria-label="Page ${t}">${t}</a>`;
+    }).join('');
+
+    /* Only show "Page X of Y" label when there are multiple pages */
+    const infoHTML = pages > 1
+      ? `<span class="info"><span class="info__cur">${page}</span><span class="info__sep">/</span><span class="info__tot">${pages.toLocaleString()}</span></span>`
+      : `<span class="info"><span class="info__cur">1</span><span class="info__sep">/</span><span class="info__tot">1</span></span>`;
+
+    this._root.innerHTML = `
+      <style>
+        /* ── Reset & Host ── */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :host {
+          display: block;
+          font-family: 'JetBrains Mono', 'Courier New', monospace;
+          --c-bg:       transparent;
+          --c-surface:  #1c2129;
+          --c-border:   #2a3140;
+          --c-hover:    #242c38;
+          --c-text:     #a8b4c2;
+          --c-muted:    #4a5568;
+          --c-accent:   #f5a623;
+          --c-accent-bg:#2a1f08;
+          --c-disabled: #2a3140;
+          --radius:     4px;
+          --btn-h:      34px;
+          --btn-min-w:  34px;
+          --font-sz:    .8rem;
+          --gap:        4px;
+        }
+
+        /* ── Outer Nav ── */
+        nav {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+          padding: 8px 0;
+          user-select: none;
+        }
+
+        /* ── Info Badge ── */
+        .info {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          font-size: .72rem;
+          letter-spacing: .05em;
+          color: var(--c-muted);
+          margin-right: 2px;
+        }
+        .info__cur  { color: var(--c-text); font-weight: 700; }
+        .info__sep  { color: var(--c-muted); }
+        .info__tot  { color: var(--c-muted); }
+
+        /* ── Button Row ── */
+        .btn-row {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: var(--gap);
+        }
+
+        /* ── Base Button ── */
+        .btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: var(--btn-h);
+          min-width: var(--btn-min-w);
+          padding: 0 8px;
+          border-radius: var(--radius);
+          font-family: inherit;
+          font-size: var(--font-sz);
+          font-weight: 500;
+          color: var(--c-text);
+          background: var(--c-surface);
+          border: 1px solid var(--c-border);
+          text-decoration: none;
+          cursor: pointer;
+          transition:
+            background 120ms ease,
+            border-color 120ms ease,
+            color 120ms ease,
+            transform 80ms ease;
+          white-space: nowrap;
+          -webkit-font-smoothing: antialiased;
+        }
+
+        a.btn:hover {
+          background: var(--c-hover);
+          border-color: #3d4f63;
+          color: #d0dae5;
+          transform: translateY(-1px);
+        }
+        a.btn:active { transform: translateY(0); }
+
+        /* ── Current (active) page ── */
+        .btn.current {
+          background: var(--c-accent-bg);
+          border-color: var(--c-accent);
+          color: var(--c-accent);
+          font-weight: 700;
+          cursor: default;
+          box-shadow: 0 0 0 1px var(--c-accent-bg),
+                      inset 0 1px 0 rgba(245,166,35,.1);
+        }
+
+        /* ── Disabled nav button ── */
+        .btn.disabled {
+          opacity: .28;
+          pointer-events: none;
+          cursor: not-allowed;
+          background: transparent;
+          border-color: var(--c-disabled);
+          color: var(--c-muted);
+        }
+
+        /* ── Nav Prev / Next labels ── */
+        .nav-label {
+          font-size: .68rem;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+        .nav-label .arrow {
+          font-size: .85rem;
+          line-height: 1;
+        }
+
+        /* ── Ellipsis ── */
+        .ellipsis {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: var(--btn-h);
+          min-width: 24px;
+          padding: 0 2px;
+          font-size: .85rem;
+          color: var(--c-muted);
+          letter-spacing: .05em;
+        }
+
+        /* ── Single-page minimal UI ── */
+        .minimal-info {
+          font-size: .75rem;
+          color: var(--c-muted);
+          letter-spacing: .04em;
+        }
+      </style>
+
+      ${pages <= 1
+        ? `<nav aria-label="Pagination">
+             <span class="minimal-info">1 page</span>
+           </nav>`
+        : `<nav aria-label="Pagination">
+             ${infoHTML}
+             <div class="btn-row" role="list">
+               ${hasPrev
+                 ? `<a class="btn" href="${prevHref}" aria-label="Previous page" role="listitem">
+                      <span class="nav-label"><span class="arrow">‹</span> prev</span>
+                    </a>`
+                 : `<span class="btn disabled" aria-disabled="true" role="listitem">
+                      <span class="nav-label"><span class="arrow">‹</span> prev</span>
+                    </span>`
+               }
+               ${btnHTML}
+               ${hasNext
+                 ? `<a class="btn" href="${nextHref}" aria-label="Next page" role="listitem">
+                      <span class="nav-label">next <span class="arrow">›</span></span>
+                    </a>`
+                 : `<span class="btn disabled" aria-disabled="true" role="listitem">
+                      <span class="nav-label">next <span class="arrow">›</span></span>
+                    </span>`
+               }
+             </div>
+           </nav>`
+      }
+    `;
+  }
+}
+
+customElements.define('pagination-footer', PaginationFooter);
+
+
+/* ── Playground Controls ─────────────────────────────── */
+(function () {
+  const live      = document.getElementById('live');
+  const cPages    = document.getElementById('ctrl-pages');
+  const cPage     = document.getElementById('ctrl-page');
+  const cLimit    = document.getElementById('ctrl-limit');
+  const vPages    = document.getElementById('val-pages');
+  const vPage     = document.getElementById('val-page');
+  const vLimit    = document.getElementById('val-limit');
+
+  function sync() {
+    const pages = +cPages.value;
+    const page  = Math.min(+cPage.value, pages);
+
+    cPage.max    = pages;
+    cPage.value  = page;
+
+    vPages.textContent = pages;
+    vPage.textContent  = page;
+    vLimit.textContent = cLimit.value;
+
+    live.setAttribute('pages', pages);
+    live.setAttribute('page',  page);
+    live.setAttribute('limit', cLimit.value);
+  }
+
+  cPages.addEventListener('input', sync);
+  cPage.addEventListener('input',  sync);
+  cLimit.addEventListener('input', sync);
+})();
+</script>
+</body>
+</html>

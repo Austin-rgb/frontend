@@ -10,7 +10,7 @@ class UserForm extends HTMLElement {
   _render() {
     this.shadowRoot.innerHTML = `
       <style>
-        ${baseStyles}
+        
         :host { display: block; }
         .card {
           background: #fff;
@@ -113,7 +113,7 @@ class UserForm extends HTMLElement {
     const shadow = this.shadowRoot;
     shadow
       .getElementById("back-btn")
-      .addEventListener("click", () => Store.setStep("cart"));
+      .addEventListener("click", () => store.setStep("cart"));
 
     shadow.getElementById("submit-btn").addEventListener("click", () => {
       const nameEl = shadow.getElementById("name");
@@ -142,8 +142,8 @@ class UserForm extends HTMLElement {
       if (!valid) return;
 
       const token = randomToken();
-      Store.setToken(token);
-      Store.setUser({ name: nameEl.value.trim(), email: emailEl.value.trim() });
+      store.setToken(token);
+      store.setUser({ name: nameEl.value.trim(), email: emailEl.value.trim() });
       console.log(
         `%c[Checkout] Verification token for ${emailEl.value.trim()}: ${token}`,
         "color: #c84b2f; font-weight: bold; font-size: 14px;",
@@ -156,7 +156,7 @@ class UserForm extends HTMLElement {
       note.classList.add("show");
 
       // Navigate after brief delay
-      setTimeout(() => Store.setStep("verify"), 1200);
+      setTimeout(() => store.setStep("verify"), 1200);
     });
   }
 }

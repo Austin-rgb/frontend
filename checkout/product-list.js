@@ -1,17 +1,17 @@
-    /* ─────────────────────────────────────────────
+/* ─────────────────────────────────────────────
        <product-list>
     ───────────────────────────────────────────── */
-    class ProductList extends HTMLElement {
-      connectedCallback() {
-        this.attachShadow({ mode: 'open' });
-        Store.subscribe(state => this._render(state));
-      }
+class ProductList extends HTMLElement {
+  connectedCallback() {
+    this.attachShadow({ mode: "open" });
+    store.subscribe((state) => this._render(state));
+  }
 
-      _render(state) {
-        const { products } = state;
-        this.shadowRoot.innerHTML = `
+  _render(state) {
+    const { products } = state;
+    this.shadowRoot.innerHTML = `
       <style>
-        ${baseStyles}
+        
         :host { display: block; }
         .section-label {
           font-family: 'JetBrains Mono', monospace;
@@ -84,7 +84,9 @@
           </tr>
         </thead>
         <tbody>
-          ${products.map(p => `
+          ${products
+            .map(
+              (p) => `
             <tr>
               <td class="prod-name">${p.name}</td>
               <td class="prod-price">${fmt(p.price)}</td>
@@ -95,29 +97,31 @@
                   <button class="qty-btn" data-id="${p.id}" data-action="inc">+</button>
                 </div>
               </td>
-              <td class="total-cell ${p.quantity === 0 ? 'zero' : ''}">${fmt(p.price * p.quantity)}</td>
+              <td class="total-cell ${p.quantity === 0 ? "zero" : ""}">${fmt(p.price * p.quantity)}</td>
             </tr>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </tbody>
       </table>
     `;
 
-        this.shadowRoot.querySelectorAll('.qty-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = +btn.dataset.id;
-            const state = Store.getState();
-            const prod = state.products.find(p => p.id === id);
-            if (!prod) return;
-            const delta = btn.dataset.action === 'inc' ? 1 : -1;
-            Store.setQuantity(id, prod.quantity + delta);
-          });
-        });
+    this.shadowRoot.querySelectorAll(".qty-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = +btn.dataset.id;
+        const state = store.getState();
+        const prod = state.products.find((p) => p.id === id);
+        if (!prod) return;
+        const delta = btn.dataset.action === "inc" ? 1 : -1;
+        store.setQuantity(id, prod.quantity + delta);
+      });
+    });
 
-        this.shadowRoot.querySelectorAll('.qty-input').forEach(input => {
-          input.addEventListener('change', () => {
-            Store.setQuantity(+input.dataset.id, parseInt(input.value) || 0);
-          });
-        });
-      }
-    }
-    customElements.define('product-list', ProductList);
+    this.shadowRoot.querySelectorAll(".qty-input").forEach((input) => {
+      input.addEventListener("change", () => {
+        store.setQuantity(+input.dataset.id, parseInt(input.value) || 0);
+      });
+    });
+  }
+}
+customElements.define("product-list", ProductList);

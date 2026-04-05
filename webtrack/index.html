@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WebTrack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    WEBTRACK
+  </div>
+  <div class="header-status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">connecting…</span>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+        <span class="icon">◈</span> Dashboard
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Management</div>
+      <div class="nav-item" data-page="containers" onclick="navigate('containers')">
+        <span class="icon">▣</span> Containers
+        <span class="nav-badge" id="badge-containers">—</span>
+      </div>
+      <div class="nav-item" data-page="tags" onclick="navigate('tags')">
+        <span class="icon">◇</span> Tags
+        <span class="nav-badge" id="badge-tags">—</span>
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Events</div>
+      <div class="nav-item" data-page="tracks" onclick="navigate('tracks')">
+        <span class="icon">≡</span> Tracks
+        <span class="nav-badge" id="badge-tracks">—</span>
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Config</div>
+      <div class="nav-item" data-page="settings" onclick="navigate('settings')">
+        <span class="icon">⊙</span> Settings
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Dashboard -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-subtitle">System overview</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↺ Refresh</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="stats-row" id="dashStats">
+          <div class="stat-card"><div class="stat-label">Containers</div><div class="stat-value" id="stat-containers">—</div></div>
+          <div class="stat-card"><div class="stat-label">Tags</div><div class="stat-value" id="stat-tags">—</div></div>
+          <div class="stat-card"><div class="stat-label">Total Tracks</div><div class="stat-value" id="stat-tracks">—</div></div>
+          <div class="stat-card"><div class="stat-label">Containers Active</div><div class="stat-value" id="stat-active">—</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Recent Events</div>
+              <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="navigate('tracks')">View all →</button>
+            </div>
+            <div id="dashFeed" class="live-feed" style="padding:8px;"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Containers</div>
+              <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="navigate('containers')">Manage →</button>
+            </div>
+            <div id="dashContainerList" style="padding:4px 8px 8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Containers -->
+    <div class="page" id="page-containers">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Containers</div>
+          <div class="page-subtitle">Manage tracking containers</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openCreateContainer()">+ New Container</button>
+        </div>
+      </div>
+      <div class="content" style="padding:0;">
+        <div class="card" style="margin:20px 24px; border-radius:4px;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Tags</th>
+                  <th>Config URL</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="containersTbody">
+                <tr class="loading-row"><td colspan="5"><div class="spinner" style="margin:0 auto"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="containersPagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="page" id="page-tags">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Tags</div>
+          <div class="page-subtitle" id="tagsSubtitle">All tags</div>
+        </div>
+        <div class="page-actions">
+          <select class="filter-select" id="tagsContainerFilter" onchange="filterTagsByContainer()">
+            <option value="">All Containers</option>
+          </select>
+          <button class="btn btn-primary" onclick="openCreateTag()">+ New Tag</button>
+        </div>
+      </div>
+      <div class="content" style="padding:0;">
+        <div class="card" style="margin:20px 24px; border-radius:4px;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Container</th>
+                  <th>Event</th>
+                  <th>Conditions</th>
+                  <th>Action</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tagsTbody">
+                <tr class="loading-row"><td colspan="7"><div class="spinner" style="margin:0 auto"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="tagsPagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tracks -->
+    <div class="page" id="page-tracks">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Tracks</div>
+          <div class="page-subtitle">Incoming tracking events</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="loadTracks(1)">↺ Refresh</button>
+          <button class="btn btn-primary" onclick="openSendTrack()">↑ Send Track</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <select class="filter-select" id="tracksContainerFilter" onchange="loadTracks(1)">
+          <option value="">All Containers</option>
+        </select>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text-mute);margin-left:auto" id="tracksCount"></span>
+      </div>
+      <div class="content" style="padding:0;">
+        <div class="card" style="margin:20px 24px; border-radius:4px;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Container</th>
+                  <th>Event</th>
+                  <th>Timestamp</th>
+                  <th>Received</th>
+                  <th>Data</th>
+                </tr>
+              </thead>
+              <tbody id="tracksTbody">
+                <tr class="loading-row"><td colspan="6"><div class="spinner" style="margin:0 auto"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="tracksPagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Settings</div>
+          <div class="page-subtitle">API connection & configuration</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="card" style="max-width:600px;margin-bottom:20px;">
+          <div class="card-header"><div class="card-title">API Connection</div></div>
+          <div style="padding:16px;">
+            <div class="server-row">
+              <div class="server-label">Base URL</div>
+              <input class="server-input" id="settingsBaseUrl" type="text" placeholder="http://localhost:8080" />
+            </div>
+            <div class="server-row" style="border:none;">
+              <div class="server-label">Status</div>
+              <span id="settingsStatus" style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">Not tested</span>
+              <button class="btn btn-ghost btn-sm" onclick="testConnection()" style="margin-left:8px;">Test</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="max-width:600px;">
+          <div class="card-header"><div class="card-title">Embed Snippet</div></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Container ID</label>
+              <input class="form-input" id="snippetCid" placeholder="your-container-id" oninput="updateSnippet()" />
+            </div>
+            <div class="config-box" id="snippetBox">
+<span style="color:var(--text-mute)">// Enter a container ID above</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="align-self:flex-start" onclick="copySnippet()">⧉ Copy snippet</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Modal: Create Container -->
+<div class="modal-overlay" id="modal-createContainer">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Container</div>
+      <button class="modal-close" onclick="closeModal('modal-createContainer')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Container Name</label>
+        <input class="form-input" id="createContainerName" placeholder="My App (optional)" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-createContainer')">Cancel</button>
+      <button class="btn btn-primary" onclick="createContainer()">Create Container</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Container Detail -->
+<div class="modal-overlay" id="modal-containerDetail">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="containerDetailTitle">Container</div>
+      <button class="modal-close" onclick="closeModal('modal-containerDetail')">✕</button>
+    </div>
+    <div class="modal-body" id="containerDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="containerDeleteBtn">Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-containerDetail')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create Tag -->
+<div class="modal-overlay" id="modal-createTag">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="createTagTitle">New Tag</div>
+      <button class="modal-close" onclick="closeModal('modal-createTag')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Container</label>
+          <select class="form-select" id="createTagContainer"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tag Name</label>
+          <input class="form-input" id="createTagName" placeholder="Analytics Tag" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event</label>
+          <input class="form-input" id="createTagEvent" placeholder="pageview, click, …" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Action</label>
+          <input class="form-input" id="createTagAction" placeholder="gtag(), fbq(), …" />
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div class="form-label">Conditions</div>
+          <button class="btn btn-ghost btn-sm" onclick="addConditionRow('createTagConditions')">+ Add</button>
+        </div>
+        <div id="createTagConditions" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-createTag')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitCreateTag()">Create Tag</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Tag -->
+<div class="modal-overlay" id="modal-editTag">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title">Edit Tag</div>
+      <button class="modal-close" onclick="closeModal('modal-editTag')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Tag Name</label>
+          <input class="form-input" id="editTagName" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event</label>
+          <input class="form-input" id="editTagEvent" />
+        </div>
+        <div class="form-group" style="grid-column:span 2">
+          <label class="form-label">Action</label>
+          <textarea class="form-textarea" id="editTagAction"></textarea>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div class="form-label">Conditions</div>
+          <button class="btn btn-ghost btn-sm" onclick="addConditionRow('editTagConditions')">+ Add</button>
+        </div>
+        <div id="editTagConditions" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="editTagDeleteBtn">Delete Tag</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-editTag')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEditTag()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Send Track -->
+<div class="modal-overlay" id="modal-sendTrack">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Send Track Event</div>
+      <button class="modal-close" onclick="closeModal('modal-sendTrack')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Container</label>
+        <select class="form-select" id="sendTrackContainer"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Event</label>
+        <input class="form-input" id="sendTrackEvent" placeholder="pageview" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Timestamp (Unix ms)</label>
+        <input class="form-input" id="sendTrackTimestamp" type="number" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data (JSON string)</label>
+        <textarea class="form-textarea" id="sendTrackData" placeholder='{"url":"/home","referrer":""}'></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sendTrack')">Cancel</button>
+      <button class="btn btn-primary" onclick="sendTrack()">Send Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Track Detail -->
+<div class="modal-overlay" id="modal-trackDetail">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title">Track Detail</div>
+      <button class="modal-close" onclick="closeModal('modal-trackDetail')">✕</button>
+    </div>
+    <div class="modal-body" id="trackDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-trackDetail')">Close</button>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

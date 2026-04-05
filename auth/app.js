@@ -166,8 +166,8 @@ class RegisterForm extends HTMLElement {
       }
     </style>
     <form id="auth-form">
-        <input id="username" placeholder="Username" autocomplete="username" required>
-        <input id="password" type="password" placeholder="Password" autocomplete="new-password" required>
+        <input data-cy="login-user" id="username" placeholder="Username" autocomplete="username" required>
+        <input data-cy="login-pass" id="password" type="password" placeholder="Password" autocomplete="new-password" required>
         <button type="submit">Register</button>
     </form>
     `;

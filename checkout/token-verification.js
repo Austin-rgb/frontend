@@ -4,7 +4,7 @@
 class TokenVerification extends HTMLElement {
   connectedCallback() {
     this.attachShadow({ mode: "open" });
-    this._state = Store.getState();
+    this._state = store.getState();
     this._render();
   }
 
@@ -12,7 +12,7 @@ class TokenVerification extends HTMLElement {
     const { user } = this._state;
     this.shadowRoot.innerHTML = `
       <style>
-        ${baseStyles}
+        
         :host { display: block; }
         .card {
           background: #fff; border: 1.5px solid #d4cfc4;
@@ -72,7 +72,7 @@ class TokenVerification extends HTMLElement {
         <div class="card-title">Verify Email</div>
         <div class="card-sub">// Token sent to ${user.email || "your email"} — check the console</div>
         <div class="token-input-wrap">
-          <input type="text" id="token-input" maxlength="6" placeholder="000000" />
+          <input type="text" id="token-input" />
           <button class="verify-btn" id="verify-btn">Verify</button>
         </div>
         <div class="msg" id="msg"></div>
@@ -87,20 +87,23 @@ class TokenVerification extends HTMLElement {
     const msg = shadow.getElementById("msg");
 
     // Only allow digits
-    input.addEventListener("input", () => {
-      input.value = input.value.replace(/\D/g, "");
-    });
+    // input.addEventListener("input", () => {
+    //   input.value = input.value.replace(/\D/g, "");
+    // });
 
-    shadow.getElementById("verify-btn").addEventListener("click", () => {
+    shadow.getElementById("verify-btn").addEventListener("click", async () => {
       const entered = input.value.trim();
-      const stored = Store.getState().token;
+      const stored = store.getState().token;
       msg.className = "msg";
 
-      if (entered === stored) {
+      let res = await (
+        await fetch("/api/auth/passwordless/register/confirm_link/" + entered)
+      ).json();
+      if (res) {
         input.classList.add("success");
         msg.textContent = "✓ Token verified! Redirecting to payment…";
         msg.classList.add("msg", "show", "ok");
-        setTimeout(() => Store.setStep("payment"), 900);
+        setTimeout(() => store.setStep("payment"), 900);
       } else {
         input.classList.add("error");
         msg.textContent = "✗ Invalid token. Please try again.";
@@ -115,7 +118,7 @@ class TokenVerification extends HTMLElement {
 
     shadow
       .getElementById("back-btn")
-      .addEventListener("click", () => Store.setStep("form"));
+      .addEventListener("click", () => store.setStep("form"));
   }
 }
 customElements.define("token-verification", TokenVerification);

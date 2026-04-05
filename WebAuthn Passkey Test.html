@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAuthn Passkey Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            background: #f9f9f9;
+        }
+
+        .section h2 {
+            color: #555;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 10px;
+            position: relative;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .user-list {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .user-list h3 {
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .user-list ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .user-list li {
+            padding: 4px 0;
+            font-family: monospace;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 12px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #856404;
+        }
+
+        .note strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 Passkey Authentication</h1>
+        <div class="subtitle">Test WebAuthn implementation with biometrics/security keys</div>
+
+        <div id="status" class="status info">User list refreshed</div>
+
+        <div class="section">
+            <h2>📝 Register New Passkey</h2>
+            <div class="input-group">
+                <label for="reg-username">Username</label>
+                <input type="text" id="reg-username" placeholder="Enter username" autocomplete="username">
+            </div>
+            <button id="register-btn" disabled="disabled">Create Passkey</button>
+        </div>
+
+        <div class="section">
+            <h2>🔐 Login with Passkey</h2>
+            <div class="input-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" placeholder="Enter username" autocomplete="username">
+            </div>
+            <button id="login-btn" disabled="disabled">Authenticate with Passkey</button>
+        </div>
+
+        <div class="divider">
+            <span>or</span>
+        </div>
+
+        <div class="user-list" id="user-list">
+            <h3>📋 Registered Users (demo)</h3>
+            <ul id="users"><li style="color:#999;">No users registered yet</li></ul>
+            <button id="refresh-users" style="margin-top: 10px; font-size: 12px; padding: 6px;">Refresh List</button>
+        </div>
+
+        <div class="note">
+            <strong>⚠️ Important Notes:</strong>
+            • This test requires a secure context (HTTPS or localhost)<br>
+            • Passkeys work with biometrics (Face ID, Touch ID), Windows Hello, or security keys<br>
+            • Make sure your backend server is running on <code>http://localhost:8080</code><br>
+            • Check browser console (F12) for detailed debugging
+        </div>
+    </div>
+<script>
+    const API_BASE = '/api/auth';
+
+    // ── base64url helpers ──────────────────────────────────────────────────────
+
+    function base64urlToBuffer(base64url) {
+        const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+        const binary = atob(base64);
+        const buffer = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) buffer[i] = binary.charCodeAt(i);
+        return buffer.buffer;
+    }
+
+    function bufferToBase64url(buffer) {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    // Decode the server's registration options so the browser can consume them
+    function prepareRegistrationOptions(opts) {
+        // opts IS the publicKey object (webauthn-rs serialises it under "publicKey")
+        const pk = opts.publicKey;
+        pk.challenge = base64urlToBuffer(pk.challenge);
+        pk.user.id = base64urlToBuffer(pk.user.id);
+        if (pk.excludeCredentials) {
+            pk.excludeCredentials = pk.excludeCredentials.map(c => ({
+                ...c,
+                id: base64urlToBuffer(c.id),
+            }));
+        }
+        return opts; // { publicKey: { challenge: ArrayBuffer, ... } }
+    }
+
+    // Decode the server's authentication options so the browser can consume them
+    function prepareAuthenticationOptions(opts) {
+        const pk = opts.publicKey;
+        pk.challenge = base64urlToBuffer(pk.challenge);
+        if (pk.allowCredentials) {
+            pk.allowCredentials = pk.allowCredentials.map(c => ({
+                ...c,
+                id: base64urlToBuffer(c.id),
+            }));
+        }
+        return opts;
+    }
+
+    // Encode the PublicKeyCredential the browser returns into plain JSON
+    // that webauthn-rs can deserialise (all ArrayBuffers → base64url strings)
+    function encodeRegistrationCredential(cred) {
+        return {
+            id: cred.id,
+            rawId: bufferToBase64url(cred.rawId),
+            type: cred.type,
+            response: {
+                attestationObject: bufferToBase64url(cred.response.attestationObject),
+                clientDataJSON:    bufferToBase64url(cred.response.clientDataJSON),
+            },
+        };
+    }
+
+    function encodeAuthenticationCredential(cred) {
+        return {
+            id: cred.id,
+            rawId: bufferToBase64url(cred.rawId),
+            type: cred.type,
+            response: {
+                authenticatorData: bufferToBase64url(cred.response.authenticatorData),
+                clientDataJSON:    bufferToBase64url(cred.response.clientDataJSON),
+                signature:         bufferToBase64url(cred.response.signature),
+                userHandle: cred.response.userHandle
+                    ? bufferToBase64url(cred.response.userHandle)
+                    : null,
+            },
+        };
+    }
+
+    // ── UI helpers ─────────────────────────────────────────────────────────────
+
+    function showStatus(message, type = 'info') {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type} show`;
+        if (type === 'success' || type === 'info') {
+            setTimeout(() => statusDiv.classList.remove('show'), 5000);
+        }
+    }
+
+    async function apiRequest(endpoint, method, body = null) {
+        const options = {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        if (body) options.body = JSON.stringify(body);
+
+        const response = await fetch(`${API_BASE}${endpoint}`, options);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP ${response.status}`);
+        }
+        return response;
+    }
+
+    // ── Registration ───────────────────────────────────────────────────────────
+
+    async function register(username) {
+        showStatus(`Starting registration for ${username}...`, 'info');
+
+        // 1. Fetch options from server
+        const startResponse = await apiRequest('/register/start', 'POST', { username });
+        const rawOptions = await startResponse.json();
+
+        // 2. Decode base64url fields → ArrayBuffer
+        const options = prepareRegistrationOptions(rawOptions);
+
+        showStatus('Please complete the passkey creation dialog...', 'info');
+
+        // 3. Ask the browser / authenticator to create a credential
+        const credential = await navigator.credentials.create(options);
+        if (!credential) throw new Error('Credential creation was cancelled');
+
+        // 4. Re-encode ArrayBuffers → base64url for the server
+        const encoded = encodeRegistrationCredential(credential);
+
+        // 5. Send to server
+        const finishResponse = await apiRequest(
+            `/register/finish?username=${encodeURIComponent(username)}`,
+            'POST',
+            encoded
+        );
+        const result = await finishResponse.json();
+        showStatus(`✅ ${result.message || 'Registered successfully!'}`, 'success');
+        addUserToLocalStorage(username);
+        refreshUserList();
+    }
+
+    // ── Authentication ─────────────────────────────────────────────────────────
+
+    async function login(username) {
+        showStatus(`Starting authentication for ${username}...`, 'info');
+
+        // 1. Fetch options from server
+        const startResponse = await apiRequest('/login/start', 'POST', { username });
+        const rawOptions = await startResponse.json();
+
+        // 2. Decode base64url fields → ArrayBuffer
+        const options = prepareAuthenticationOptions(rawOptions);
+
+        showStatus('Please complete the passkey authentication dialog...', 'info');
+
+        // 3. Ask the browser / authenticator to sign the challenge
+        const credential = await navigator.credentials.get(options);
+        if (!credential) throw new Error('Authentication was cancelled');
+
+        // 4. Re-encode ArrayBuffers → base64url for the server
+        const encoded = encodeAuthenticationCredential(credential);
+
+        // 5. Send to server
+        const finishResponse = await apiRequest(
+            `/login/finish?username=${encodeURIComponent(username)}`,
+            'POST',
+            encoded
+        );
+        const result = await finishResponse.json();
+        showStatus(`✅ ${result.message || 'Logged in successfully!'}`, 'success');
+    }
+
+    // ── User list (localStorage demo) ─────────────────────────────────────────
+
+    function addUserToLocalStorage(username) {
+        const users = JSON.parse(localStorage.getItem('webauthn_users') || '[]');
+        if (!users.includes(username)) {
+            users.push(username);
+            localStorage.setItem('webauthn_users', JSON.stringify(users));
+        }
+    }
+
+    function refreshUserList() {
+        const userList = document.getElementById('users');
+        const storedUsers = JSON.parse(localStorage.getItem('webauthn_users') || '[]');
+        userList.innerHTML = storedUsers.length
+            ? storedUsers.map(u => `<li>👤 ${escapeHtml(u)}</li>`).join('')
+            : '<li style="color:#999;">No users registered yet</li>';
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ── WebAuthn support check ─────────────────────────────────────────────────
+
+    function checkWebAuthnSupport() {
+        if (!window.PublicKeyCredential) {
+            showStatus('❌ WebAuthn not supported. Use Chrome, Firefox, Safari, or Edge.', 'error');
+            document.getElementById('register-btn').disabled = true;
+            document.getElementById('login-btn').disabled = true;
+            return false;
+        }
+        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+            .then(ok => console.log(ok
+                ? '✅ Platform authenticator available'
+                : '⚠️ Platform authenticator not available, but security keys may work'))
+            .catch(err => console.error('Authenticator check error:', err));
+        return true;
+    }
+
+    // ── Event listeners ────────────────────────────────────────────────────────
+
+    document.getElementById('register-btn').addEventListener('click', async () => {
+        const username = document.getElementById('reg-username').value.trim();
+        if (!username)           return showStatus('Please enter a username', 'error');
+        if (username.length < 3) return showStatus('Username must be at least 3 characters', 'error');
+
+        const btn = document.getElementById('register-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> Creating...';
+        try {
+            await register(username);
+        } catch (err) {
+            console.error('Registration error:', err);
+            showStatus(
+                err.name === 'NotAllowedError' ? '❌ Registration cancelled' :
+                err.name === 'NotSupportedError' ? '❌ Not supported on this device' :
+                `❌ Registration failed: ${err.message}`,
+                'error'
+            );
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Create Passkey';
+        }
+    });
+
+    document.getElementById('login-btn').addEventListener('click', async () => {
+        const username = document.getElementById('login-username').value.trim();
+        if (!username) return showStatus('Please enter a username', 'error');
+
+        const btn = document.getElementById('login-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> Authenticating...';
+        try {
+            await login(username);
+        } catch (err) {
+            console.error('Login error:', err);
+            showStatus(
+                err.name === 'NotAllowedError' ? '❌ Authentication cancelled' :
+                err.message.includes('not found') ? '❌ No passkey found — register first' :
+                `❌ Authentication failed: ${err.message}`,
+                'error'
+            );
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Authenticate with Passkey';
+        }
+    });
+
+    document.getElementById('refresh-users').addEventListener('click', () => {
+        refreshUserList();
+        showStatus('User list refreshed', 'info');
+    });
+
+    document.getElementById('reg-username').addEventListener('keypress', e => {
+        if (e.key === 'Enter') document.getElementById('register-btn').click();
+    });
+    document.getElementById('login-username').addEventListener('keypress', e => {
+        if (e.key === 'Enter') document.getElementById('login-btn').click();
+    });
+
+    // ── Init ───────────────────────────────────────────────────────────────────
+
+    console.log('WebAuthn Support:', {
+        PublicKeyCredential: !!window.PublicKeyCredential,
+        CredentialsContainer: !!navigator.credentials,
+        Create: !!navigator.credentials?.create,
+        Get: !!navigator.credentials?.get,
+    });
+
+    if (checkWebAuthnSupport()) {
+        refreshUserList();
+        showStatus('Ready! Enter a username to get started.', 'info');
+    }
+</script>
+  
+
+</body></html>
